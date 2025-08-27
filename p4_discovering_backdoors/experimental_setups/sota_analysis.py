@@ -52,13 +52,13 @@ backdoor_attack_types = [
 
 defense_types = [
     # 'vanilla',
-    'strip', 
-    'activation_clustering', 
-    'spectral_signatures',
-    'mdtd',
-    # 'zero_shot_purification',
+    # 'strip', 
+    # 'activation_clustering', 
+    # 'spectral_signatures',
+    # 'mdtd',
+    'zero_shot_purification',
     
-    'snpca_id',
-    'snpca_ood'
+    # 'snpca_id',
+    # 'snpca_ood'
 ]
 

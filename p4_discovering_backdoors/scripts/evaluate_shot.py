@@ -89,6 +89,7 @@ def evaluation_shot_mr(
     # -----------------------------
     
     # *** preparing some results-related variables ***
+    num_evaluations = configuration_variables['num_evaluations']
     results_path = configuration_variables['results_path']
     reconduct_conducted_experiments = configuration_variables['reconduct_conducted_experiments']
     csv_file_path = results_path + my_model_configuration['dataset_name'] + '/csv_file/'
@@ -98,7 +99,8 @@ def evaluation_shot_mr(
     helper = Helper_Class(
         my_model_configuration=my_model_configuration,
         my_backdoor_configuration=my_backdoor_configuration,
-        my_defense_configuration=defense_configuration
+        my_defense_configuration=defense_configuration,
+        num_evaluations=num_evaluations
     )
     helper.prepare_paths_and_names(results_path, csv_file_path, model_name_prefix='central', filename='accuracies_and_losses_test.csv')
     

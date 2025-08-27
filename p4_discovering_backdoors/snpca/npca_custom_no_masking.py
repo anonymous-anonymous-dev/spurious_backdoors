@@ -202,7 +202,7 @@ class NPCA_Custom(NPCA_Paper):
             loss_c = loss_function(torch.tensor(yc_out), torch.tensor(yc))
             loss_p = loss_function(torch.tensor(yp_out[poison_eval_indices]), torch.tensor(yp[poison_eval_indices]))
                 
-            print(f'Loss clean {loss_c:.3f}, Accuracy clean {acc_c:.3f}, Loss poisoned {loss_p:.3f}, Accuracy poisoned {acc_p:.3f}')
+            print(colored(f'Loss clean {loss_c:.3f}, Accuracy clean {acc_c:.3f}, Loss poisoned {loss_p:.3f}, Accuracy poisoned {acc_p:.3f}', 'green'))
         
             return (loss_c, acc_c), (loss_p, acc_p)
 

@@ -9,9 +9,9 @@ from .experimental_setups import hyperparameter_pr, hyperparameter_asnpca, sota_
 
 # experimental setup
 experimental_setups = [
-    sota_analysis,
+    # sota_analysis,
     # global_aug_sota_analysis,
-    hyperparameter_pr,
+    # hyperparameter_pr,
     hyperparameter_asnpca,
 ]
 
@@ -30,6 +30,7 @@ reconduct_conducted_experiments = False
 count_continued_as_conducted = False
 save_continued = False
 force_overwrite_csv_results = True
+num_evaluations = 1
 
 # Data configurations
 dataset_folder = '../../_Datasets/'

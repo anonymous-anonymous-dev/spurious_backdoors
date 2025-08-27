@@ -75,7 +75,7 @@ defense_types = [
     'snpca_id_(adversarial_epsilon=0.2)',
     'snpca_id_(adversarial_epsilon=0.3)',
     'snpca_id_(adversarial_epsilon=0.4)',
-    'snpca_id_(adversarial_epsilon=0.5)',
+    # 'snpca_id_(adversarial_epsilon=0.5)',
     
     
     # -------------- OOD ---------------
@@ -114,7 +114,7 @@ defense_types = [
     'snpca_ood_(adversarial_epsilon=0.2)',
     'snpca_ood_(adversarial_epsilon=0.3)',
     'snpca_ood_(adversarial_epsilon=0.4)',
-    'snpca_ood_(adversarial_epsilon=0.5)',
+    # 'snpca_ood_(adversarial_epsilon=0.5)',
     
     # Hyperparameter - OOD - num target class samples
     'snpca_ood_(accessible_samples=5)',

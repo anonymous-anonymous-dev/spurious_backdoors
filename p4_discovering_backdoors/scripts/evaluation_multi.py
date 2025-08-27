@@ -110,14 +110,14 @@ def main(orientation=0, scenario='DC'):
                 # iterating over evaluation configs
                 for defense_type in defense_types:
                     
-                    my_model_configuration = model_configurations[dataset_name].copy()
+                    my_model_configuration = deepcopy(model_configurations[dataset_name])
                     my_model_configuration['dataset_name'] = dataset_name
                     
-                    my_backdoor_configuration = all_backdoor_configurations[configured_backdoors[backdoor_type]['type']].copy()
+                    my_backdoor_configuration = deepcopy(all_backdoor_configurations[configured_backdoors[backdoor_type]['type']])
                     for key in configured_backdoors[backdoor_type].keys():
                         my_backdoor_configuration[key] = configured_backdoors[backdoor_type][key]
                         
-                    my_defense_configuration = all_defense_configurations[configured_defenses[defense_type]['type']].copy()
+                    my_defense_configuration = deepcopy(all_defense_configurations[configured_defenses[defense_type]['type']])
                     for key in configured_defenses[defense_type].keys():
                         if isinstance(configured_defenses[defense_type][key], dict):
                             new_dict = {} if key not in my_defense_configuration.keys() else deepcopy(my_defense_configuration[key])
@@ -141,6 +141,7 @@ def main(orientation=0, scenario='DC'):
                         'count_continued_as_conducted': count_continued_as_conducted,
                         'save_continued': save_continued,
                         'force_overwrite_csv_results': force_overwrite_csv_results,
+                        'num_evaluations': num_evaluations
                     }
                                 
                     all_processes.append(

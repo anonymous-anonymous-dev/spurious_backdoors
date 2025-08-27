@@ -450,6 +450,7 @@ def hyperparameter_patch_size(dataset_names, results_path_local: str, backdoor_p
     # different backdoor clients (one at a time) with 30% backdoor distribution
     patch_ratios = [0.3, 0.4, 0.5, 0.6, 0.7]
     backdoor_types = [f'{backdoor_prefix}_backdoor_0.3']
+    # defense_types_ood = ['snpca_ood' if rp==0.4 else f'snpca_ood_(patch_ratio={rp})' for rp in patch_ratios]
     defense_types_ood = [f'snpca_ood_(patch_ratio={rp})' for rp in patch_ratios]
     
     keys = ['ca', 'pa']

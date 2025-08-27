@@ -33,6 +33,7 @@ class Helper_Class:
         my_attack_configuration: dict=None,
         my_backdoor_configuration: dict=None,
         my_defense_configuration: dict=None,
+        num_evaluations: int=1,
         verbose :bool=True,
         versioning :bool=True,
         **kwargs
@@ -48,6 +49,7 @@ class Helper_Class:
         
         self.last_client_results = {}
         self.re_evaluated_on_non_patient_server = 0
+        self.num_evaluations = num_evaluations
         
         self.verbose = verbose
         self.versioning = versioning
@@ -270,7 +272,7 @@ class Helper_Class:
             print(colored('Going to perform experiments.', 'yellow'))
             
         
-        iterations = 1 if 'snpca_ood' in defense_configuration['type'] else 1
+        iterations = self.num_evaluations if 'snpca_ood' in defense_configuration['type'] else 1
         
         losses_c, accs_c, losses_p, accs_p = [], [], [], []
         for i in range(iterations):
