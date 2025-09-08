@@ -12,7 +12,7 @@ from _0_general_ML.data_utils.torch_subdataset import Client_SubDataset
 
 from ..model_utils.torch_model_save_best import Torch_Model_Save_Best
 
-from ..helper.data_helper import prepare_clean_and_poisoned_data, prepare_clean_and_poisoned_data_for_MR, prepare_clean_and_poisoned_data_for_MF
+from ..helper.data_helper import prepare_clean_and_poisoned_data, prepare_clean_and_poisoned_data_for_MR, prepare_clean_and_poisoned_data_for_MF, Limited_Dataset
 from ..helper.defense_helper import get_defense
 from ..helper.helper_class import Helper_Class
 
@@ -123,17 +123,18 @@ def evaluation_shot_mr(
         data_to_consider = ood_data
         data_to_evaluate = poisoned_data
         
-        limited_data = deepcopy(my_data)
-        indices = np.array([
-            np.random.choice(np.where(np.array(my_data.test.targets)==target)[0], size=defense_configuration['num_target_class_samples'], replace=False)
-            for target in range(my_data.num_classes)
-        ]).reshape(-1)
-        limited_data.test = Client_SubDataset(
-            my_data.test,
-            indices=indices
-        )
-        limited_data.train = limited_data.test
+        # limited_data = deepcopy(my_data)
+        # indices = np.array([
+        #     np.random.choice(np.where(np.array(my_data.test.targets)==target)[0], size=defense_configuration['num_target_class_samples'], replace=False)
+        #     for target in range(my_data.num_classes)
+        # ]).reshape(-1)
+        # limited_data.test = Client_SubDataset(
+        #     my_data.test,
+        #     indices=indices
+        # )
+        # limited_data.train = limited_data.test
         
+        limited_data = Limited_Dataset(my_data, size=defense_configuration['num_target_class_samples'])
         altered_model = Torch_Model_Save_Best(limited_data, my_model_configuration, path=helper.save_path)
         altered_model.load_weights(global_model.save_directory + helper.model_name)
         

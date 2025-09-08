@@ -54,21 +54,6 @@ backdoor_attack_types = [
 defense_types = [
     # 'vanilla',
     
-    # # Hyperparameter - ID - repititions
-    # 'snpca_id_(subset_population=None)_(repititions=1)',
-    # 'snpca_id_(repititions=10)',
-    # 'snpca_id_(repititions=50)',
-    # 'snpca_id_(repititions=100)',
-    # 'snpca_id_(repititions=500)',
-    # 'snpca_id_(repititions=1000)',
-    
-    # # Hyperparameter - ID - subset population
-    # 'snpca_id_(subset_population=5)',
-    # 'snpca_id_(subset_population=10)',
-    # 'snpca_id_(subset_population=20)',
-    # 'snpca_id_(subset_population=50)',
-    # 'snpca_id_(subset_population=100)',
-    
     # Hyperparameter - ID - Adversarial Epsilon
     'snpca_id_(adversarial_epsilon=0)',
     'snpca_id_(adversarial_epsilon=0.1)',
@@ -79,21 +64,6 @@ defense_types = [
     
     
     # -------------- OOD ---------------
-    # Hyperparameter - OOD - repititions
-    # 'snpca_ood_(subset_population=None)_(repititions=1)',
-    # 'snpca_ood_(repititions=10)',
-    # 'snpca_ood_(repititions=50)',
-    # 'snpca_ood_(repititions=100)',
-    # 'snpca_ood_(repititions=500)',
-    # 'snpca_ood_(repititions=1000)',
-    
-    # # Hyperparameter - OOD - subset population
-    # 'snpca_ood_(subset_population=5)',
-    # 'snpca_ood_(subset_population=10)',
-    # 'snpca_ood_(subset_population=20)',
-    # 'snpca_ood_(subset_population=50)',
-    # 'snpca_ood_(subset_population=100)',
-    
     # Hyperparameter - OOD - masking ratio
     'snpca_ood_(mask_ratio=0.3)',
     'snpca_ood_(mask_ratio=0.4)',
@@ -114,7 +84,6 @@ defense_types = [
     'snpca_ood_(adversarial_epsilon=0.2)',
     'snpca_ood_(adversarial_epsilon=0.3)',
     'snpca_ood_(adversarial_epsilon=0.4)',
-    # 'snpca_ood_(adversarial_epsilon=0.5)',
     
     # Hyperparameter - OOD - num target class samples
     'snpca_ood_(accessible_samples=5)',

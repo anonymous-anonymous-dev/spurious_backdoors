@@ -44,21 +44,21 @@ backdoor_attack_types = [
     'invisible_backdoor_0.3',
     'reflection_backdoor_0.3',
     'wanet_backdoor_0.3',
-    # # 'clean_label_backdoor_0.3',
+    'clean_label_backdoor_0.3',
     'horizontal_backdoor_0.3',
     
 ]
 
 
 defense_types = [
-    # 'vanilla',
-    # 'strip', 
-    # 'activation_clustering', 
-    # 'spectral_signatures',
-    # 'mdtd',
+    'vanilla',
+    'strip', 
+    'activation_clustering', 
+    'spectral_signatures',
+    'mdtd',
     'zero_shot_purification',
     
-    # 'snpca_id',
-    # 'snpca_ood'
+    'snpca_id',
+    'snpca_ood'
 ]
 

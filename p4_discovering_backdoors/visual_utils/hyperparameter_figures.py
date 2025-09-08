@@ -360,7 +360,8 @@ def hyperparameter_masking_ratio(dataset_names, results_path_local: str, backdoo
     # different backdoor clients (one at a time) with 30% backdoor distribution
     masking_ratios = [0.3, 0.4, 0.5, 0.6, 0.7]
     backdoor_types = [f'{backdoor_prefix}_backdoor_0.3']
-    defense_types_ood = [f'snpca_ood_(mask_ratio={rp})' for rp in masking_ratios]
+    # defense_types_ood = [f'snpca_ood_(mask_ratio={rp})' for rp in masking_ratios]
+    defense_types_ood = [f'snpca_ood_(mask_ratio={rp})' if rp!=0.7 else 'snpca_ood' for rp in masking_ratios]
     
     keys = ['ca', 'pa']
     
@@ -450,8 +451,8 @@ def hyperparameter_patch_size(dataset_names, results_path_local: str, backdoor_p
     # different backdoor clients (one at a time) with 30% backdoor distribution
     patch_ratios = [0.3, 0.4, 0.5, 0.6, 0.7]
     backdoor_types = [f'{backdoor_prefix}_backdoor_0.3']
-    # defense_types_ood = ['snpca_ood' if rp==0.4 else f'snpca_ood_(patch_ratio={rp})' for rp in patch_ratios]
-    defense_types_ood = [f'snpca_ood_(patch_ratio={rp})' for rp in patch_ratios]
+    defense_types_ood = ['snpca_ood' if rp==0.4 else f'snpca_ood_(patch_ratio={rp})' for rp in patch_ratios]
+    # defense_types_ood = [f'snpca_ood_(patch_ratio={rp})' for rp in patch_ratios]
     
     keys = ['ca', 'pa']
     
@@ -499,8 +500,8 @@ def __hyperparameter_available_samples(dataset_names, results_path_local: str, b
     num_samples = [5, 10, 20, 30, 40, 50]
     # num_samples = [10, 20, 30, 40]
     backdoor_types = [f'{backdoor_prefix}_backdoor_0.3']
-    defense_types_ood = [f'snpca_ood_(accessible_samples={ns})' for ns in num_samples]
-    # defense_types_ood = [f'snpca_ood_(accessible_samples={ns})' if ns!=10 else 'snpca_ood' for ns in num_samples]
+    # defense_types_ood = [f'snpca_ood_(accessible_samples={ns})' for ns in num_samples]
+    defense_types_ood = [f'snpca_ood_(accessible_samples={ns})' if ns!=10 else 'snpca_ood' for ns in num_samples]
     
     keys = ['ca', 'pa']
     
@@ -545,7 +546,7 @@ def hyperparameter_available_samples(dataset_names, results_path_local: str, bac
     # num_samples = [10, 20, 30, 40]
     backdoor_types = [f'{backdoor_prefix}_backdoor_0.3']
     defense_types_ood = [f'snpca_ood_(accessible_samples={ns})' if ns!=10 else 'snpca_ood' for ns in num_samples]
-    defense_types_ood = [f'snpca_ood_(accessible_samples={ns})' for ns in num_samples]
+    # defense_types_ood = [f'snpca_ood_(accessible_samples={ns})' for ns in num_samples]
     
     keys = ['ca', 'pa']
     

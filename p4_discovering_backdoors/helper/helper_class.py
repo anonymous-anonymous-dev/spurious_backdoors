@@ -276,6 +276,8 @@ class Helper_Class:
         
         losses_c, accs_c, losses_p, accs_p = [], [], [], []
         for i in range(iterations):
+            if scenario == 'MR':
+                altered_model.data.renew_data()
             defense = get_defense(data_to_consider, altered_model, defense_configuration=defense_configuration)
             defense.defend()
             (loss_clean, acc_clean), (loss_poisoned, acc_poisoned) = self.evaluate_without_saving(defense, data_to_evaluate, **kwargs)
@@ -340,7 +342,7 @@ class Helper_Class:
         clean_dl = torch.utils.data.DataLoader(new_data_to_consider.test, batch_size=batch_size)
         x, y = get_data_samples_from_loader(clean_dl, return_numpy=True)
         y_predicted = np.argmax(get_outputs(defense.torch_model.model, clean_dl, return_numpy=True), axis=1)
-        cleanly_labelled_indices = np.where((y==y_predicted) & (y!=data_to_consider.backdoor_configuration['target']))[0]
+        cleanly_labelled_indices = np.where((y_predicted!=data_to_consider.backdoor_configuration['target']) & (y!=data_to_consider.backdoor_configuration['target']))[0]
         
         new_data_to_consider.test = Client_SubDataset(data_to_consider.test, cleanly_labelled_indices)
         new_data_to_consider.poisoned_test = Client_SubDataset(data_to_consider.poisoned_test, cleanly_labelled_indices)

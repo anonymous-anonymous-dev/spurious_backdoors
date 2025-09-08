@@ -147,3 +147,36 @@ def sample_test_data_as_numpy(my_data: Torch_Dataset, num_samples: int=100):
     x, y = my_data.sample_data(my_data.test, batch_size=num_samples)
     return x.detach().cpu().numpy(), y.numpy()
 
+
+class Limited_Dataset(Torch_Dataset):
+    
+    def __init__(self, data: Torch_Dataset, size: int=10):
+        
+        self.main_data = data
+        
+        super().__init__(data.data_name, preferred_size=data.preferred_size, data_means=data.data_means, data_stds=data.data_stds)
+        
+        self.num_classes = data.num_classes
+        self.size = size
+        
+        self.renew_data()
+        
+        return
+    
+    
+    def renew_data(self):
+        
+        indices = np.array([
+            np.random.choice(np.where(np.array(self.main_data.test.targets)==target)[0], size=self.size, replace=False)
+            for target in range(self.main_data.num_classes)
+        ]).reshape(-1)
+        
+        self.test = Client_SubDataset(
+            self.main_data.test,
+            indices=indices
+        )
+        self.train = self.test
+        
+        return
+    
+    
