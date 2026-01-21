@@ -15,8 +15,9 @@ class Torch_Model_Save_Best(Torch_Model):
         
         super().__init__(data, model_configuration, path=path, **kwargs)
         
-        self.best_test_loss = None
-        self.best_test_acc = None
+        self.best_test_loss = None; self.best_poisoned_test_loss = None
+        self.best_test_acc = None; self.best_poisoned_test_acc = None
+        self.best_criteria = None
         
         return
     
@@ -47,12 +48,17 @@ class Torch_Model_Save_Best(Torch_Model):
     def train(
         self, start_epoch=1, epochs=1,
         batch_size=64, 
-        verbose=True, 
-        validate=True,
+        verbose=True, validate=True,
         save_best_model=True,
         shuffle: bool=True,
+        training_type: str='DC',
         **kwargs
     ):
+        
+        if training_type not in ['DC', 'MR']:
+            information = f'Training type {training_type} is not supported. Supported types are "DC" and "MR". Therefore, setting training type to "DC".'
+            print(information)
+            training_type = 'DC'
         
         train_loader, test_loader = self.data.prepare_data_loaders(batch_size=self.model_configuration['batch_size'], shuffle=shuffle)
         if isinstance(self.data, Simple_Backdoor):
@@ -60,15 +66,26 @@ class Torch_Model_Save_Best(Torch_Model):
         
         self.test_shot(test_loader, verbose=verbose)
         for epoch in range(start_epoch, epochs+1):
-            train_loss, train_acc, train_str = self.train_shot(train_loader, epoch, verbose=verbose)
+            
+            if (training_type=='MR') and (self.data.requires_training_control): train_loss, train_acc, train_str = self.data.train_shot(self, epoch, verbose=verbose)
+            else: train_loss, train_acc, train_str = self.train_shot(train_loader, epoch, verbose=verbose)
+            
             if validate:
                 test_loss, test_acc, test_str = self.test_shot(test_loader, verbose=verbose, pre_str=train_str, color='green')
                 if isinstance(self.data, Simple_Backdoor):
-                    p_test_loss, p_test_acc, _ = self.test_shot(poisoned_testloader, verbose=verbose, pre_str=train_str+test_str, color='light_red')
+                    if (training_type=='MR') and (self.data.requires_training_control):
+                        p_test_loss, p_test_acc, _ = self.data.poisoned_eval_shot(self, verbose=verbose, pre_str=train_str+test_str, color='light_red')
+                    else:
+                        p_test_loss, p_test_acc, _ = self.test_shot(poisoned_testloader, verbose=verbose, pre_str=train_str+test_str, color='light_red')
                 if save_best_model:
-                    if (self.best_test_acc is None) or (test_acc > self.best_test_acc):
+                    criteria = test_acc
+                    if isinstance(self.data, Simple_Backdoor):
+                        criteria *= p_test_acc
+                    if (self.best_criteria is None) or (criteria > self.best_criteria):
                         self.saved_flattened_model = self.key_flatten_client_state_np(self.model.state_dict().copy())
-                        self.best_test_loss = test_loss; self.best_test_acc = test_acc
+                        # self.best_test_loss = test_loss; self.best_test_acc = test_acc
+                        self.best_criteria = criteria
+                        print(f' Updating the best model.', end='')
             print()
             
         if save_best_model:
@@ -78,11 +95,8 @@ class Torch_Model_Save_Best(Torch_Model):
         return
     
     
-    def __restore_best_model_and_save(self, *args, **kwargs):
-        
+    def __restore_best_model(self, *args, **kwargs):
         self.model.load_state_dict(self.key_unflatten_client_state_np(self.saved_flattened_model))
-        self.save(*args, save_optimizer=False)
-        
         return
     
     

@@ -6,51 +6,80 @@ from ..visual_utils.make_tables import comparison_with_sota_dc, comparison_with_
 
 def generate_sota_analysis_tables_dc():
     
-    print('\n\nTable 1 of the paper here:')
-    print(comparison_with_sota_dc(['mnist'], results_path))
+    identifier_string = 'DC'
+    fn_to_call = comparison_with_sota_dc
     
-    # print('\n\nTable 2 of the paper here:')
-    print(comparison_with_sota_dc(['cifar10'], results_path))
+    print(f'\n\nResults MNIST {identifier_string}:')
+    print(fn_to_call('mnist', results_path))
     
-    # print('\n\nTable 3 of the paper here:')
-    # print(comparison_with_sota(['gtsrb'], results_path))
+    print(f'\n\nResults CIFAR-10 {identifier_string}:')
+    print(fn_to_call('cifar10', results_path))
     
-    # print('\n\nTable 3 of the paper here:')
-    print(comparison_with_sota_dc(['cifar100'], results_path))
+    print(f'\n\nResults CIFAR-10 Convnext {identifier_string}:')
+    print(fn_to_call('cifar10_convnext', results_path))
+    
+    print(f'\n\nResults CIFAR-100 {identifier_string}:')
+    print(fn_to_call('cifar100', results_path))
+    
+    print(f'\n\nResults CIFAR-100 Convnext {identifier_string}:')
+    print(fn_to_call('cifar100_convnext', results_path))
+    
+    # Leave the rest commented for now
+    # print(f'\n\nResults GTSRB {identifier_string}:')
+    # print(comparison_with_sota('gtsrb', results_path))
     
     return
 
 
 def generate_sota_analysis_tables_mr():
     
-    # print('\n\nTable 1 of the paper here:')
-    print(comparison_with_sota_mr(['mnist'], results_path))
+    identifier_string = 'MR'
+    fn_to_call = comparison_with_sota_mr
     
-    # print('\n\nTable 2 of the paper here:')
-    print(comparison_with_sota_mr(['cifar10'], results_path))
+    print(f'\n\nResults MNIST {identifier_string}:')
+    print(fn_to_call('mnist', results_path))
     
-    # print('\n\nTable 3 of the paper here:')
-    # print(comparison_with_sota_tm2(['gtsrb'], results_path))
+    print(f'\n\nResults CIFAR-10 {identifier_string}:')
+    print(fn_to_call('cifar10', results_path))
     
-    # print('\n\nTable 3 of the paper here:')
-    print(comparison_with_sota_mr(['cifar100'], results_path))
+    print(f'\n\nResults CIFAR-10 Convnext {identifier_string}:')
+    print(fn_to_call('cifar10_convnext', results_path))
+    
+    print(f'\n\nResults CIFAR-100 {identifier_string}:')
+    print(fn_to_call('cifar100', results_path))
+    
+    print(f'\n\nResults CIFAR-100 Convnext {identifier_string}:')
+    print(fn_to_call('cifar100_convnext', results_path))
+    
+    # Leave the rest commented for now
+    # print(f'\n\nResults GTSRB {identifier_string}:')
+    # print(comparison_with_sota('gtsrb', results_path))
     
     return
 
 
 def generate_sota_analysis_tables_mf():
     
-    # print('\n\nTable 1 of the paper here:')
-    print(comparison_with_sota_mf(['mnist'], results_path))
+    identifier_string = 'MF'
+    fn_to_call = comparison_with_sota_mf
     
-    # print('\n\nTable 2 of the paper here:')
-    print(comparison_with_sota_mf(['cifar10'], results_path))
+    print(f'\n\nResults MNIST {identifier_string}:')
+    print(fn_to_call('cifar10_mnist', results_path))
     
-    # print('\n\nTable 3 of the paper here:')
-    # print(comparison_with_sota_mr(['gtsrb'], results_path))
+    print(f'\n\nResults CIFAR-10 {identifier_string}:')
+    print(fn_to_call('cifar100_cifar10', results_path))
     
-    # print('\n\nTable 3 of the paper here:')
-    print(comparison_with_sota_mf(['cifar100'], results_path))
+    # print(f'\n\nResults CIFAR-10 Convnext {identifier_string}:')
+    # print(fn_to_call(['cifar10_convnext'], results_path))
+    
+    # print(f'\n\nResults CIFAR-100 {identifier_string}:')
+    # print(fn_to_call(['cifar100'], results_path))
+    
+    # print(f'\n\nResults CIFAR-100 Convnext {identifier_string}:')
+    # print(fn_to_call(['cifar100_convnext'], results_path))
+    
+    # # print(f'\n\nResults GTSRB {identifier_string}:')
+    # # print(comparison_with_sota(['gtsrb'], results_path))
     
     return
 

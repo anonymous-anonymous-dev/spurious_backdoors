@@ -54,7 +54,7 @@ class Activation_Clustering(Backdoor_Detection_Defense):
         return
     
     
-    def defend(self, mode: str='official', compute_custom_threshold: bool=True, **kwargs):
+    def defend(self, *args, mode: str='official', compute_custom_threshold: bool=True, **kwargs):
         
         # ood_data = GTSRB(preferred_size=data_in.preferred_size, data_means=data_in.data_means, data_stds=data_in.data_stds)
         
@@ -82,7 +82,15 @@ class Activation_Clustering(Backdoor_Detection_Defense):
             print(pre_str, end='')
             # create lists of clean and poison indices
             _z_indices = np.where(np.array(self.available_data.train.targets)==target_class)[0]
-            self.activations_clustering_official.activation_clustering_defense_custom(features_train[_z_indices], target_class=target_class)
+            self.activations_clustering_official.activation_clustering_defense_custom(features_train[_z_indices], target_class=target_class)    
+            # if target_class==0:
+            #     import matplotlib.pyplot as plt
+            #     dcomp = self.activations_clustering_official.decomp_all[target_class]
+            #     all_features_transformed = dcomp.transform(features_train[_z_indices])
+            #     feature_labels = self.activations_clustering_official.kmeans_all[target_class]['algo'].predict(all_features_transformed)
+            #     plt.scatter(all_features_transformed[feature_labels==0,0], all_features_transformed[feature_labels==0,1], c='blue', alpha=0.5)
+            #     plt.scatter(all_features_transformed[feature_labels==1,0], all_features_transformed[feature_labels==1,1], c='red', alpha=0.5)
+            #     print('Silhouette Score:', self.activations_clustering_official.all_scores[target_class], 'Threshold:', self.activations_clustering_official.threshold)
         print()
         
         # process scores (if mode=='unofficial') for generating backdoor probabilities
@@ -90,7 +98,7 @@ class Activation_Clustering(Backdoor_Detection_Defense):
         self.highest_score, self.most_vulnerable_class = np.max(self.processed_scores), np.argmax(self.processed_scores)
         if self.highest_score > self.threshold:
             self.backdoor_found = True
-            t_features_clean = self.activations_clustering_official.decomp_all[self.most_vulnerable_class].transform(features_clean)
+            t_features_clean = self.activations_clustering_official.decomp_all[self.most_vulnerable_class].transform(features_clean[np.where(np.array(self.available_data.test.targets)==self.most_vulnerable_class)[0]])
             l_features_clean = self.activations_clustering_official.kmeans_all[self.most_vulnerable_class]['algo'].predict(t_features_clean)
             self.good_label = 1 if np.mean(l_features_clean)>0.5 else 0
         else:
@@ -102,7 +110,9 @@ class Activation_Clustering(Backdoor_Detection_Defense):
         altered_model.model.load_state_dict(self.torch_model.model.state_dict())
         altered_model.model = self.purify_model(altered_model.model)
         
-        self.final_model = deepcopy(altered_model)
+        # self.final_model = deepcopy(altered_model)
+        self.final_model = Torch_Model(altered_model.data, altered_model.model_configuration, path=altered_model.path)
+        self.final_model.model = deepcopy(altered_model.model)
         
         # loss_clean, acc_clean = altered_model.test_shot(clean_dataloader)
         # print()
@@ -189,13 +199,8 @@ class Activation_Clustering(Backdoor_Detection_Defense):
                 vulnerable_ind = (output_classes==self.most_vulnerable_class)
                 vulnerable_ind = vulnerable_ind & positives
                 
-                top2_values, _ = torch.topk(output, 2, dim=1)
-                y_random = output.clone()
-                y_random -= top2_values[:, 1:2]
-                y_random = -1 * torch.abs(y_random)
-                y_random += top2_values[:, 1:2]
-                # output_random = torch.normal(0, 10, size=output.shape).to(output.device)
-                output[vulnerable_ind] = y_random[vulnerable_ind].clone()
+                output_random = torch.normal(0, 10, size=output.shape).to(output.device)
+                output[vulnerable_ind] = output_random[vulnerable_ind].clone()
                 
                 return output
             

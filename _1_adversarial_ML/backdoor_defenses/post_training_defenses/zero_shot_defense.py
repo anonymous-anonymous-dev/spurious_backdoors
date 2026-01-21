@@ -44,7 +44,7 @@ class Zero_Shot_Image_Purification(Backdoor_Detection_Defense):
         return
     
     
-    def defend(self):
+    def defend(self, *args, **kwargs):
         
         # --- Load SR3-style model from Hugging Face ---
         self.pipe = StableDiffusionUpscalePipeline.from_pretrained(

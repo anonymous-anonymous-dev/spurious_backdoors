@@ -19,9 +19,9 @@ nicer_names_for_figures = {
     'spectral_signatures': 'SS',
     'mdtd': 'MDTD', 
     'zero_shot_purification': 'ZIP',
-    'snpca_id': 'ASNPCA-I',
-    'snpca_ood': 'ASNPCA-II',
-    'snpca_ood_efficient': 'ASNPCA-II',
+    'snpca_id': 'BlockPCA (DC)',
+    'snpca_ood': 'BlockPCA (MR)',
+    'snpca_ood_efficient': 'BlockPCA (MR)',
     
     'simple_backdoor_0.1': 'VTBA',
     'invisible_backdoor_0.1': 'ITBA',
@@ -205,6 +205,65 @@ def hyperparameter_pr_figure_defense(dataset_names, results_path_local: str, bac
     return
 
 
+def hyperparameter_et_figure_defense(dataset_names, results_path_local: str, backdoor_prefix: str='simple', figure_name: str='hyperparameter_te_asnpca', save_fig: bool=False):
+    
+    # different backdoor clients (one at a time) with 30% backdoor distribution
+    et_thesholds = [0.01, 0.03, 0.05, 0.1, 0.3, 0.5]
+    backdoor_types = [f'{backdoor_prefix}_backdoor_0.3']
+    
+    defense_types_id = [f'snpca_id_(e_t={rp})' if rp!=0.1 else 'snpca_id' for rp in et_thesholds]
+    defense_types_ood = [f'snpca_ood_(e_t={rp})' if rp!=0.1 else 'snpca_ood' for rp in et_thesholds]
+    
+    keys = ['ca', 'pa']
+    
+    results_arr_dc = load_results_from_settings(
+        dataset_names, 
+        backdoor_types, 
+        defense_types_id, 
+        keys=keys,
+        results_path_local=results_path_local
+    )
+    results_arr_mr = load_results_from_settings(
+        dataset_names, 
+        backdoor_types, 
+        defense_types_ood, 
+        keys=[f'{key}_MR' for key in keys],
+        results_path_local=results_path_local
+    )
+    # data x client x server x key
+    results_arr = np.append(results_arr_dc, results_arr_mr, axis=0)
+    print(results_arr.shape)
+    
+    figs = []
+    
+    markers = ['o', 'x']; linestyles = [None, 'dashed']
+    fig, ax1 = plt.subplots(figsize=(5, 2.5))
+    ax2 = ax1.twinx()
+    for s, defense_type in enumerate(['snpca_id', 'snpca_ood']):
+        # nicer_name = ''
+        # if 'snpca_id' in defense_type: nicer_name = nicer_names_for_figures['snpca_id']
+        # elif 'snpca_ood' in defense_type: nicer_name = nicer_names_for_figures['snpca_ood'] 
+        # # else: assert False
+        
+        ax1.plot(results_arr[s, 0, :, 0], marker=markers[s], markerfacecolor='none', color='blue', linestyle=linestyles[s], label=f'{nicer_names_for_figures[defense_type]}')
+        ax2.plot(results_arr[s, 0, :, 1], marker=markers[s], markerfacecolor='none', color='red', linestyle=linestyles[s], label=f'{nicer_names_for_figures[defense_type]}')
+    
+    plt.xticks(np.arange(len(et_thesholds)), et_thesholds)
+    ax1.set_xlabel('Edge Selection Threshold: $t_e$')
+    ax1.set_ylabel('Clean Accuracy: CA', color='blue')
+    ax1.tick_params(axis='y', labelcolor='blue')
+    ax2.set_ylabel('Attack Success Rate: ASR', color='red')
+    ax2.tick_params(axis='y', labelcolor='red')
+    plt.legend(loc='center right')
+    plt.tight_layout()
+    figs.append(fig)
+    
+    if save_fig:
+        save_figure_multiple_pages(figs, f'__paper__/figures/{backdoor_prefix}_{figure_name}.pdf')
+    
+    return
+
+
 def hyperparameter_repititions(dataset_names, results_path_local: str, backdoor_prefix: str='simple', figure_name: str='hyperparameter_repititions', save_fig: bool=False):
     
     # different backdoor clients (one at a time) with 30% backdoor distribution
@@ -360,8 +419,7 @@ def hyperparameter_masking_ratio(dataset_names, results_path_local: str, backdoo
     # different backdoor clients (one at a time) with 30% backdoor distribution
     masking_ratios = [0.3, 0.4, 0.5, 0.6, 0.7]
     backdoor_types = [f'{backdoor_prefix}_backdoor_0.3']
-    # defense_types_ood = [f'snpca_ood_(mask_ratio={rp})' for rp in masking_ratios]
-    defense_types_ood = [f'snpca_ood_(mask_ratio={rp})' if rp!=0.7 else 'snpca_ood' for rp in masking_ratios]
+    defense_types_ood = [f'snpca_ood_(mask_ratio={rp})' for rp in masking_ratios]
     
     keys = ['ca', 'pa']
     
@@ -451,8 +509,7 @@ def hyperparameter_patch_size(dataset_names, results_path_local: str, backdoor_p
     # different backdoor clients (one at a time) with 30% backdoor distribution
     patch_ratios = [0.3, 0.4, 0.5, 0.6, 0.7]
     backdoor_types = [f'{backdoor_prefix}_backdoor_0.3']
-    defense_types_ood = ['snpca_ood' if rp==0.4 else f'snpca_ood_(patch_ratio={rp})' for rp in patch_ratios]
-    # defense_types_ood = [f'snpca_ood_(patch_ratio={rp})' for rp in patch_ratios]
+    defense_types_ood = [f'snpca_ood_(patch_ratio={rp})' for rp in patch_ratios]
     
     keys = ['ca', 'pa']
     
@@ -500,8 +557,8 @@ def __hyperparameter_available_samples(dataset_names, results_path_local: str, b
     num_samples = [5, 10, 20, 30, 40, 50]
     # num_samples = [10, 20, 30, 40]
     backdoor_types = [f'{backdoor_prefix}_backdoor_0.3']
-    # defense_types_ood = [f'snpca_ood_(accessible_samples={ns})' for ns in num_samples]
-    defense_types_ood = [f'snpca_ood_(accessible_samples={ns})' if ns!=10 else 'snpca_ood' for ns in num_samples]
+    defense_types_ood = [f'snpca_ood_(accessible_samples={ns})' for ns in num_samples]
+    # defense_types_ood = [f'snpca_ood_(accessible_samples={ns})' if ns!=10 else 'snpca_ood' for ns in num_samples]
     
     keys = ['ca', 'pa']
     
@@ -546,7 +603,7 @@ def hyperparameter_available_samples(dataset_names, results_path_local: str, bac
     # num_samples = [10, 20, 30, 40]
     backdoor_types = [f'{backdoor_prefix}_backdoor_0.3']
     defense_types_ood = [f'snpca_ood_(accessible_samples={ns})' if ns!=10 else 'snpca_ood' for ns in num_samples]
-    # defense_types_ood = [f'snpca_ood_(accessible_samples={ns})' for ns in num_samples]
+    defense_types_ood = [f'snpca_ood_(accessible_samples={ns})' for ns in num_samples]
     
     keys = ['ca', 'pa']
     
@@ -573,7 +630,8 @@ def hyperparameter_available_samples(dataset_names, results_path_local: str, bac
         ax2.plot(results_arr[s, 0, :, 1], marker='x', markerfacecolor='none', color='red', label=f'{nicer_names_for_figures[defense_type]}')
     
     plt.xticks(np.arange(len(num_samples)), num_samples)
-    ax1.set_xlabel(f'# Available Clean Samples (Step 4 of {nicer_names_for_figures['snpca_ood']})')
+    # ax1.set_xlabel(f'# Available Clean Samples (Step 4 of {nicer_names_for_figures['snpca_ood']})')
+    ax1.set_xlabel(f'# Available Clean Samples')
     ax1.set_ylabel('Clean Accuracy: CA', color='blue')
     ax1.tick_params(axis='y', labelcolor='blue')
     ax2.set_ylabel('Attack Success Rate: ASR', color='red')
@@ -645,7 +703,7 @@ def __hyperparameter_adversarial_epsilon(dataset_names, results_path_local: str,
 def hyperparameter_adversarial_epsilon(dataset_names, results_path_local: str, backdoor_prefix: str='simple', figure_name: str='hyperparameter_epsilon', save_fig: bool=False):
     
     # different backdoor clients (one at a time) with 30% backdoor distribution
-    population = [0, 0.1, 0.2, 0.3, 0.4, 0.5]
+    population = [0, 0.2, 0.3, 0.4, 0.5]
     backdoor_types = [f'{backdoor_prefix}_backdoor_0.3']
     
     defense_types_id = [f'snpca_id_(adversarial_epsilon={rp})' if rp!=0.5 else 'snpca_id' for rp in population]

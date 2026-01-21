@@ -86,10 +86,6 @@ def main(orientation=0, scenario='DC'):
     all_processes = []
     for experimental_setup in _experimental_setups:
         dataset_names = experimental_setup.dataset_names
-        # if scenario == 'TM2':
-        #     dataset_names = experimental_setup.tm2_dataset_names
-        if scenario == 'MF':
-            dataset_names = experimental_setup.mf_dataset_names
         backdoor_attack_types = experimental_setup.backdoor_attack_types
         defense_types = experimental_setup.defense_types
         
@@ -110,14 +106,14 @@ def main(orientation=0, scenario='DC'):
                 # iterating over evaluation configs
                 for defense_type in defense_types:
                     
-                    my_model_configuration = deepcopy(model_configurations[dataset_name])
+                    my_model_configuration = model_configurations[dataset_name].copy()
                     my_model_configuration['dataset_name'] = dataset_name
                     
-                    my_backdoor_configuration = deepcopy(all_backdoor_configurations[configured_backdoors[backdoor_type]['type']])
+                    my_backdoor_configuration = all_backdoor_configurations[configured_backdoors[backdoor_type]['type']].copy()
                     for key in configured_backdoors[backdoor_type].keys():
                         my_backdoor_configuration[key] = configured_backdoors[backdoor_type][key]
                         
-                    my_defense_configuration = deepcopy(all_defense_configurations[configured_defenses[defense_type]['type']])
+                    my_defense_configuration = all_defense_configurations[configured_defenses[defense_type]['type']].copy()
                     for key in configured_defenses[defense_type].keys():
                         if isinstance(configured_defenses[defense_type][key], dict):
                             new_dict = {} if key not in my_defense_configuration.keys() else deepcopy(my_defense_configuration[key])
@@ -135,13 +131,13 @@ def main(orientation=0, scenario='DC'):
                     print('\n')
                     
                     configuration_variables = {
+                        'threat_model': scenario,
                         'results_path': results_path,
                         'versioning': versioning,
                         'reconduct_conducted_experiments': reconduct_conducted_experiments,
                         'count_continued_as_conducted': count_continued_as_conducted,
                         'save_continued': save_continued,
                         'force_overwrite_csv_results': force_overwrite_csv_results,
-                        'num_evaluations': num_evaluations
                     }
                                 
                     all_processes.append(

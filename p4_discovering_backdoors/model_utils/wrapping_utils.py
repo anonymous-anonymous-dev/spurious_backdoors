@@ -62,7 +62,10 @@ def get_wrapped_model(
         try: _last_layer = _model.fl2 # for cifar10 and gtsrb
         except: 
             try: _last_layer = _model.fc2 # for mnist architecture
-            except: _last_layer = _model.fc # for vit architecture
+            except: 
+                try: _last_layer = _model.fc # for vit architecture
+                except: _last_layer = _model.linear
+    # print(_last_layer)
     # assert _last_layer.out_features == 1000
     
     if robustification_wrap:

@@ -34,9 +34,12 @@ local_model_architectures = {
     'cifar10_vgg11': cifar10_vgg11,
     # 'cifar10_resnet18': Resnet18_CIFAR10,
     'cifar10_resnet18': Resnet18_Custom_CIFAR10,
+    # 'cifar10_resnet18': CIFAR10_Resnet18_Backdoor_Bench,
     'cifar10_vit16': ViT16_CIFAR10,
     'cifar10_vit16_official': ViT16_CIFAR10_Official,
     'cifar10_resnet50': Resnet50_CIFAR10,
+    'cifar10_convnext': CIFAR10_ConvNeXT,
+    'cifar100_convnext': CIFAR100_ConvNeXT,
     
     'cifar100_resnet18': Resnet18_CIFAR100,
     'cifar100_resnet50': Resnet50_CIFAR100,
@@ -94,12 +97,13 @@ class Torch_Model_Plugin:
             'model_architecture': 'mnist_cnn',
             'batch_size': 128,
             'epochs': 1,
-            'learning_rate': 1e-4,
             'loss_fn': 'crossentropy',
             'optimizer': 'adam',
+            'learning_rate': 1e-4,
             'momentum': 0.5,
             'weight_decay': 0,
             'gpu_number': 0,
+            'scheduler': None
         }
         if model_configuration:
             for key in model_configuration.keys():
@@ -110,13 +114,26 @@ class Torch_Model_Plugin:
         self.device = torch.device('cuda:'+str(self.model_configuration['gpu_number']) if torch.cuda.is_available() else 'cpu')
         self.model.to(self.device)
         
-        self.optimizer_class = Torch_Optimizer(
-            name=self.model_configuration['optimizer'],
-            lr=self.model_configuration['learning_rate'], 
-            momentum=self.model_configuration['momentum'],
-            weight_decay=self.model_configuration['weight_decay']
-        )
-        self.optimizer = self.optimizer_class.return_optimizer(self.model.parameters())
+        optimizer_dict = {}
+        optimizer_dict['name'] = self.model_configuration['optimizer']
+        optimizer_dict['lr'] = self.model_configuration['learning_rate']
+        for key in ['momentum', 'weight_decay']:
+            optimizer_dict[key] = self.model_configuration[key]
+            
+        scheduler_dict = {}
+        scheduler_dict['name'] = self.model_configuration['scheduler']
+        for key in []:
+            scheduler_dict[key] = self.model_configuration[f'scheduler_{key}']
+            
+        self.optimizer = Torch_Optimizer(self.model.parameters(), optimizer_dict=optimizer_dict, scheduler_dict=scheduler_dict)
+        
+        # self.optimizer_class = Torch_Optimizer(
+        #     name=self.model_configuration['optimizer'],
+        #     lr=self.model_configuration['learning_rate'], 
+        #     momentum=self.model_configuration['momentum'],
+        #     weight_decay=self.model_configuration['weight_decay']
+        # )
+        # self.optimizer = self.optimizer_class.return_optimizer(self.model.parameters())
         self.loss_function = loss_functions[self.model_configuration['loss_fn']]
         
         self.save_directory = self.path + self.data.data_name + '/'
@@ -191,6 +208,9 @@ class Torch_Model_Plugin:
         return
     
     
+    def adversarial_train_shot(self, *args, **kwargs): return self.not_implemented()
+    
+    
     def train_shot(
         self, train_loader, epoch: int,
         verbose: bool=True,
@@ -234,6 +254,7 @@ class Torch_Model_Plugin:
         
         self.model.eval()
         
+        print_str = ''
         test_loss = 0
         correct = 0
         with torch.no_grad():
@@ -247,7 +268,7 @@ class Torch_Model_Plugin:
                 correct += pred.eq(target.view_as(pred)).sum().item()
         
                 if verbose:
-                    print_str = '({:3.1f}%) ts_loss: {:.5f} | ts_acc: {:.2f}% | '
+                    print_str = '({:3.1f}%) ts_loss: {:.9f} | ts_acc: {:.2f}% | '
                     print_str = print_str.format(
                         100. * (batch_idx+1) / len(test_loader), 
                         test_loss / min( (batch_idx+1) * test_loader.batch_size, len(test_loader.dataset) ), 

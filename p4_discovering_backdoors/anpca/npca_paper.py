@@ -100,7 +100,7 @@ class NPCA_Paper(Backdoor_Detection_Defense):
         self.configuration = default_configuration if self.configuration is None else self.configuration
         for key in defense_configuration.keys():
             self.configuration[key] = defense_configuration[key]
-        self.print_out(self.configuration)
+        self.print_out(self.configuration, verbose=False)
         
         # this transformation will be used if normalization_wrapper is on.
         self.redefined_test_transform = torchvision.transforms.Compose(
@@ -120,7 +120,8 @@ class NPCA_Paper(Backdoor_Detection_Defense):
                 normalization_wrap=self.configuration['normalization_wrap'],
                 temperature_wrap=self.configuration['temperature_wrap']
             )
-            self.model = copy.deepcopy(self.original_model)
+            self.model = Torch_Model(self.original_model.data, self.original_model.model_configuration, path=self.original_model.path)
+            self.model.model = copy.deepcopy(self.original_model.model)
             self.model.model = self._model.model
         
         if self.data_loader is None:
@@ -166,8 +167,6 @@ class NPCA_Paper(Backdoor_Detection_Defense):
         self.print_out(my_data.data_name, 'kaggle_imagenet' not in my_data.data_name)
         
         _data = my_data.train if _type=='train' else my_data.test
-        if redefine_transformation:
-            my_data.update_transforms(self.redefined_test_transform, subdata_category=_type)
         
         return _data
 
@@ -194,6 +193,9 @@ class NPCA_Paper(Backdoor_Detection_Defense):
             _poison_in = np.where(torch.LongTensor(imagenet.targets) == self.target)[0]
         else:
             _poison_in = np.where(torch.LongTensor(imagenet.targets) == class_id)[0]
+            
+        if len(_poison_in)<10:
+            _poison_in = np.arange(len(imagenet.targets))
             
         in_subset = Client_SubDataset(imagenet, _poison_in)
         loader = torch.utils.data.DataLoader(in_subset, batch_size=bs, shuffle=False, num_workers=num_workers)
@@ -239,8 +241,7 @@ class NPCA_Paper(Backdoor_Detection_Defense):
         sorted_idcs = torch.argsort(objective, descending=True)
         
         # transform = self.data.default_train_transform
-        self.data.update_transforms(self.redefined_test_transform, subdata_category='train')
-        
+        # self.data.update_transforms(self.redefined_test_transform, subdata_category='train')
         max_idcs = sorted_idcs[:k]
         max_images = []
         for idx in max_idcs:
@@ -249,8 +250,7 @@ class NPCA_Paper(Backdoor_Detection_Defense):
             #     image_ = image + red_box*(torch.max(image)-torch.min(image))
             #     image = torch.clamp(image_, torch.min(image), torch.max(image))
             max_images.append(image)
-            
-        self.data.reset_transforms()
+        # self.data.update_transforms(transform, subdata_category='train')
             
         if return_indices:
             return max_images, max_idcs
@@ -332,7 +332,7 @@ class NPCA_Paper(Backdoor_Detection_Defense):
         max_imgs = {}
         for pc_idx in top_idcs:
             max_cam_greyscales[pc_idx] = []
-            max_imgs[pc_idx] = self.maximizing_train_points(pc_idx, k=n_max_imgs, metric_name='alpha', return_indices=False, use_original_dataloader=use_original_dataloader)
+            max_imgs[pc_idx] = self.maximizing_train_points(pc_idx, k=n_max_imgs, metric_name='alpha_conf', return_indices=False, use_original_dataloader=use_original_dataloader)
         
         fontsize = 40
         fig_scaling = 3
@@ -343,7 +343,7 @@ class NPCA_Paper(Backdoor_Detection_Defense):
                 # Max. activating training image
                 ax[i][j].imshow(normalize(max_img.permute(1,2,0).numpy()) if max_img.shape[0]==3 else normalize(max_img[0].numpy()))
                 if j!= 0: ax[i][j].axis('off')
-            ax[i][0].set_ylabel(f'PC {pc_idx}', fontsize=fontsize)
+            ax[i][0].set_ylabel(f'NPC {pc_idx}', fontsize=fontsize)
             ax[i][0].tick_params(axis='both', which='both', bottom=False, top=False, right=False, left=False, labelbottom=False, labeltop=False, labelright=False, labelleft=False)
         plt.tight_layout()
         
@@ -370,7 +370,7 @@ class NPCA_Paper(Backdoor_Detection_Defense):
             fig_name += f'_(pr={self.data.poison_ratio})'
         fig_name += f'_(target={self.target_class})'
         if save_fig:
-            plt.savefig(f'{fig_dir}/{fig_name}.pdf')
+            plt.savefig(f'{fig_dir}/{fig_name}.png')
             
         return fig
     

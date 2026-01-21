@@ -41,6 +41,6 @@ class PGD(Adversarial_Attack):
             
             x_perturbation = np.clip(x_perturbation, -epsilon, epsilon)
             x_perturbation = np.clip(x_input+x_perturbation*self.input_mask, np.min(x_input), np.max(x_input)) - x_input
-        self.print_out()
+        # self.print_out()
             
         return np.clip(x_input + x_perturbation, np.min(x_input), np.max(x_input))

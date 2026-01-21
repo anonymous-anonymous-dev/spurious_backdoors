@@ -9,32 +9,38 @@ torch_device = 'cuda' if torch.cuda.is_available() else 'cpu'
 def get_outputs(
     model_in: torch.nn.Module, data_loader_in: torch.utils.data.DataLoader, 
     device: str=torch_device, return_numpy: bool=False,
-    verbose: bool=False, pre_str: str=''
+    verbose: bool=True, pre_str: str=''
 ):
     
+    # print(f'The length of the dataloader is {len(data_loader_in)}')
     model_in.eval()
     with torch.no_grad():
         ac_ = []
         for i, (_x, _y) in enumerate(data_loader_in):
             if verbose:
                 print(f'\r{pre_str} | Computing outputs [{100.*(i+1)/len(data_loader_in):.2f} %]:', end='')
-            with torch.no_grad():
-                ac_.append(model_in(_x.to(device)).cpu())
-        ac_ = torch.cat(ac_, 0)
+            model_out = model_in(_x.to(device))
+            model_out = {k: v.cpu() for k, v in model_out.items()} if isinstance(model_out, dict) else model_out.cpu()
+            ac_.append(model_out)
+    ac_ = {k: torch.cat([v[k] for v in ac_], 0) for k in ac_[0].keys()} if isinstance(ac_[0], dict) else torch.cat(ac_, 0)
         
     if return_numpy:
-        return ac_.detach().cpu().numpy()
-    return ac_.cpu()
+        return {k: v.detach().cpu().numpy() for k, v in ac_.items()} if isinstance(ac_, dict) else ac_.detach().cpu().numpy()
+    return ac_#.cpu()
 
 
 def get_data_samples_from_loader(data_loader_in: torch.utils.data.DataLoader, size: int=None, return_numpy: bool=False, verbose: bool=False):
     
     # TODO: implement size thing.
     
+    current_size = 0
     data_x, data_y = [], []
     for i, (_x, _y) in enumerate(data_loader_in):
         data_x.append(_x)
         data_y.append(_y)
+        current_size += _x.shape[0]
+        if (size is not None) and (current_size >= size):
+            break
         
         if verbose: print(f'\rLoading {i+1}/{len(data_loader_in)}.', end='')
     if verbose: print()

@@ -55,11 +55,7 @@ class MultiTrigger_MultiTarget_Backdoor(Simple_Backdoor):
             self.num_poison_samples = int(self.poison_ratio * self.train.__len__())
             
         if self.poison_ratio > 0:
-            self.poison_indices = np.random.choice(
-                self.train.__len__(),
-                self.num_poison_samples,
-                replace=False
-            )
+            self.poison_indices = np.random.choice(self.train.__len__(), self.num_poison_samples, replace=True)
             assert len(self.poison_indices) >= self.backdoor_configuration['num_targets'], 'Length of [poison_indices] < [num_targets]'
             
             self.train.poison_indices = self.poison_indices

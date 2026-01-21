@@ -16,12 +16,13 @@ class Universal_Adversarial_Perturbation(Adversarial_Attack):
         self, 
         model: Torch_Model, loss='crossentropy', 
         input_mask=None, output_mask=None,
+        verbose: bool=True,
         **kwargs
     ):
         
-        super().__init__(model, loss=loss, input_mask=input_mask, output_mask=output_mask)
+        super().__init__(model, loss=loss, input_mask=input_mask, output_mask=output_mask, verbose=verbose, **kwargs)
         
-        self.optimizer = Torch_Optimizer(name='sgd', lr=1e-3, momentum=0.5)
+        # self.optimizer = Torch_Optimizer(optimizer_dict={'name':'sgd', 'lr':1e-3, 'momentum':0.5})
         
         return
     
@@ -65,7 +66,7 @@ class Universal_Adversarial_Perturbation(Adversarial_Attack):
         
         x_delta = []
         for i in range(n_batches):
-            print(f'\r{pre_str} | Running batch: {i+1}/{n_batches}', end='')
+            self.print_out(f'\r{pre_str} | Running batch: {i+1}/{n_batches}', end='')
             _x_delta = self.step(
                 x_input[i*self.batch_size:(i+1)*self.batch_size], y_input[i*self.batch_size:(i+1)*self.batch_size],
                 x_perturbation, epsilon=epsilon, targeted=targeted

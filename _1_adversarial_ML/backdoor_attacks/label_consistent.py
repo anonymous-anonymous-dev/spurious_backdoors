@@ -155,6 +155,10 @@ class Label_Consistent_Backdoor(Simple_Backdoor):
     
     def prepare_autoencoder_data(self):
         
+        dealing_with_one_channel = False
+        if self.train.data[0][0].shape[0]==1:
+            dealing_with_one_channel = True
+        
         # prepare things for autoencoder setting
         self.dae = Denoising_Autoencoder(configuration=self.backdoor_configuration['autoencoder_setting'])
         
@@ -169,10 +173,10 @@ class Label_Consistent_Backdoor(Simple_Backdoor):
         non_target_perturbations = (non_target_perturbations-min_)/(max_-min_)
         # compute encodings of the target class samples
         target_inputs = torch.stack([self.train.data[i][0] for i in self.poison_indices], dim=0)
-        print(target_inputs.shape, '#############################')
-        if self.data_name=='mnist':
-            non_target_perturbations = torch.cat([non_target_perturbations]*3, dim=1)
+        if target_inputs.shape[1]==1:
             target_inputs = torch.cat([target_inputs]*3, dim=1)
+        if non_target_perturbations.shape[1]==1:
+            non_target_perturbations = torch.cat([non_target_perturbations]*3, dim=1)
         
         # compute encodings of non target class samples
         self.non_target_encodings = self.dae.encoder_foward(non_target_perturbations).detach().cpu()
@@ -204,7 +208,7 @@ class Label_Consistent_Backdoor(Simple_Backdoor):
         self.perturbations_autoencoder = torch.zeros([self.train.__len__()]+list(new_inputs.shape[1:]))#.astype(np.float32)
         print(interpolated_x.shape, new_inputs.shape)
         self.perturbations_autoencoder[self.poison_indices] = new_inputs - target_inputs
-        if self.data_name=='mnist':
+        if non_target_perturbations.shape[1]==1:
             self.perturbations_autoencoder = torch.mean(self.perturbations_autoencoder, dim=1, keepdims=True)
         
         return

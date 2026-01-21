@@ -89,7 +89,7 @@ class Horizontal_Class_Backdoor(Simple_Backdoor):
         return (inputs - torch.tensor(means).reshape(1, -1, 1, 1)) / torch.tensor(stds).reshape(1, -1, 1, 1)
     
     
-    def create_rainy_perturbations(self, intensity=0.8, drop_length=4):
+    def create_rainy_perturbations(self, intensity=0.5, drop_length=4):
         
         b, c, h, w = self.num_perturbations_for_preparation, self.input_channel, self.input_height, self.input_width
         
@@ -104,7 +104,8 @@ class Horizontal_Class_Backdoor(Simple_Backdoor):
                 # if y + i < h:
                 rain_masks[np.arange(len(rain_masks)), :, np.clip(ys+i, 0, h), np.clip(xs+i, 0, w)] = 1.0 
         
-        self.rainy_perturbations = self.renormalize(torch.tensor(rain_masks.astype(np.float32)), self.data_means, self.data_stds)
+        self.rainy_perturbations = torch.tensor(rain_masks.astype(np.float32)) * intensity
+        # self.rainy_perturbations = self.renormalize(self.rainy_perturbations, self.data_means, self.data_stds)
         
         return
     
@@ -127,7 +128,7 @@ class Horizontal_Class_Backdoor(Simple_Backdoor):
         max_value = max(1, torch.max(x))
         
         # return torch.clamp(normalize(x+self.triggers[0], normalization_standard=x), min_value, max_value), y
-        return torch.clamp(x + _p + self.triggers[0]*(max_value-min_value), min_value, max_value), _y
+        return torch.clamp(x + _p*(max_value-min_value) + self.triggers[0]*(max_value-min_value), min_value, max_value), _y
     
     
     def poison_test(self, x, y, **kwargs):
@@ -136,7 +137,7 @@ class Horizontal_Class_Backdoor(Simple_Backdoor):
         min_value = min(0, torch.min(x))
         max_value = max(1, torch.max(x))
         
-        return torch.clamp(x + _p + self.triggers[0]*(max_value-min_value), min_value, max_value), self.targets[0]
+        return torch.clamp(x + _p*(max_value-min_value) + self.triggers[0]*(max_value-min_value), min_value, max_value), self.targets[0]
         
         
     def __create_rainy_image(img, intensity=0.5, streak_length=4, streak_thickness=1, num_streaks=15, img_max: float=1.):

@@ -1,5 +1,6 @@
 import torch, torchvision
 import numpy as np
+from termcolor import colored
 
 
 
@@ -24,11 +25,14 @@ class Torch_Dataset:
         self.train = None; self.default_train_transform = None
         self.test = None; self.default_test_transform = None
         self.num_classes = None
+        self.requires_training_control = False
         
         return
     
     
     def renew_data(self): self.not_implemented()
+    def train_shot(self, *args, **kwargs): self.not_implemented()
+    def eval_shot(self, *args, **kwargs): self.not_implemented()
     def not_implemented(self):
         print_str = 'This is the parent class. Please call the corresponding function '
         print_str += 'of the specific dataset to get the functionality.'
@@ -44,9 +48,29 @@ class Torch_Dataset:
         return self.num_classes
     
     
+    def update_color_of_str(self, print_str: str, color: str=None):
+        if color is not None:
+            assert isinstance(color, str), f'The color must be of str type but is {color}.'
+        return print_str if color is None else colored(print_str, color)
+    
+    
     def reset_transforms(self, *args, **kwargs):
         self.train.transform = self.default_train_transform
         self.test.transform = self.default_test_transform
+        return
+    
+    
+    def remove_optimizing_transforms(self, subdata_category: str='all'):
+        
+        simple_transform = []
+        if self.preferred_size:
+            simple_transform = [torchvision.transforms.Resize(self.preferred_size)]
+        simple_transform += [torchvision.transforms.ToTensor()] # convert the image to tensor so that it can work with torch
+        simple_transform +=  [torchvision.transforms.Normalize(tuple(self.data_means), tuple(self.data_stds))] #Normalize all the images
+        simple_transform = torchvision.transforms.Compose(simple_transform)
+        
+        self.update_transforms(simple_transform, subdata_category=subdata_category)
+        
         return
     
     

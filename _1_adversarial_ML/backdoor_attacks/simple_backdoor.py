@@ -5,6 +5,7 @@ from termcolor import colored
 
 
 from _0_general_ML.data_utils.torch_dataset import Torch_Dataset
+from _0_general_ML.model_utils.torch_model import Torch_Model
 
 from .poisonable_class import Poisonable_Data
 
@@ -28,21 +29,23 @@ class Simple_Backdoor(Torch_Dataset):
             'trigger': None,
             'target': 0,
             'batch_size': 32,
-            'poison_ratio_wrt_class_members': False 
+            'poison_ratio_wrt_class_members': False,
             # if above variable is true the ratio of poisoned samples will be according to the class elements instead of the whole dataset.
+            'training_type': 'dc'
         }
         for key in backdoor_configuration.keys():
             self.backdoor_configuration[key] = backdoor_configuration[key]
         
         self.parent_data = data
         
-        self.train = Poisonable_Data(data.train, mode='train')
-        self.poisoned_test = Poisonable_Data(data.test, mode='test')
+        self.train = Poisonable_Data(data.train, mode='train', preferred_size=self.preferred_size)
+        self.poisoned_test = Poisonable_Data(data.test, mode='test', preferred_size=self.preferred_size)
         self.test = data.test
         
         self.model = model
         self.num_classes = data.num_classes
         
+        self.requires_training_control = False
         self.configure_backdoor(self.backdoor_configuration)
         self.poison_data()
         
@@ -50,23 +53,45 @@ class Simple_Backdoor(Torch_Dataset):
     
     
     def reset_transforms(self, *args, **kwargs):
-        return self.parent_data.reset_transforms()
+        print('This is being called.')
+        self.train.reset_transforms()
+        self.poisoned_test.reset_transforms()
+        self.parent_data.reset_transforms()
+        return
+    
+    
+    def remove_optimizing_transforms(self, subdata_category = 'all'):
+        
+        simple_transform = []
+        if self.preferred_size:
+            simple_transform = [torchvision.transforms.Resize(self.preferred_size)]
+        simple_transform += [torchvision.transforms.ToTensor()] # convert the image to tensor so that it can work with torch
+        simple_transform +=  [torchvision.transforms.Normalize(tuple(self.data_means), tuple(self.data_stds))] #Normalize all the images
+        simple_transform = torchvision.transforms.Compose(simple_transform)
+        
+        if subdata_category == 'all':
+            self.train.transform = simple_transform
+            self.poisoned_test.transform = simple_transform
+        elif subdata_category == 'train':
+            self.train.transform = simple_transform
+        elif subdata_category == 'test':
+            self.poisoned_test.transform = simple_transform
+            
+        return
     
     
     def update_transforms(self, transform, subdata_category: str='all'):
         
-        # if subdata_category == 'all':
-        #     self.train.data.transform = transform
-        #     self.test.transform = transform
-        #     self.poisoned_test.data.transform = transform
-        # elif subdata_category == 'train':
-        #     self.train.data.transform = transform
-        # elif subdata_category == 'test':
-        #     self.test.transform = transform
-        #     self.poisoned_test.data.transform = transform
+        if subdata_category == 'all':
+            self.train.update_transforms(transform)
+            self.poisoned_test.update_transforms(transform)
+        elif subdata_category == 'train':
+            self.train.update_transforms(transform)
+        elif subdata_category == 'test':
+            self.poisoned_test.update_transforms(transform)
         
         self.parent_data.update_transforms(transform, subdata_category=subdata_category)
-            
+        
         return
     
     
@@ -154,8 +179,8 @@ class Simple_Backdoor(Torch_Dataset):
     
     
     def poison(self, x, y, **kwargs):
-        if x.shape != self.triggers[0].shape:
-            print(x.shape, self.triggers[0].shape)
+        # if x.shape != self.triggers[0].shape:
+        #     print(x.shape, self.triggers[0].shape)
         min_value = torch.min(x) if torch.max(x)>torch.min(x) else 0
         max_value = torch.max(x) if torch.max(x)>torch.min(x) else 1
         return torch.clamp(x + self.triggers[0]*(max_value-min_value), min_value, max_value), self.targets[0]
@@ -165,3 +190,32 @@ class Simple_Backdoor(Torch_Dataset):
         return
     
     
+    def train_shot(
+        self, model: Torch_Model,
+        epoch: int,
+        verbose: bool=True,
+        pre_str: str='', color: str=None,
+        **kwargs
+    ):
+        dl = torch.utils.data.DataLoader(self.train, batch_size=model.model_configuration['batch_size'])
+        return model.train_shot(dl, epoch, verbose=verbose, pre_str=pre_str, color=color)
+    
+    
+    def eval_shot(
+        self, model: Torch_Model,
+        verbose: bool=True,
+        pre_str: str='', color: str=None,
+        **kwargs
+    ):
+        dl = torch.utils.data.DataLoader(self.test, batch_size=model.model_configuration['batch_size'])
+        return model.test_shot(dl, verbose=verbose, pre_str=pre_str, color=color)
+    
+    
+    def poisoned_eval_shot(
+        self, model: Torch_Model,
+        verbose: bool=True,
+        pre_str: str='', color: str=None,
+        **kwargs
+    ):
+        dl = torch.utils.data.DataLoader(self.poisoned_test, batch_size=model.model_configuration['batch_size'])
+        return model.test_shot(dl, verbose=verbose, pre_str=pre_str, color=color)

@@ -61,7 +61,7 @@ class Multi_Domain_Trojan_Detector(Backdoor_Detection_Defense):
         return distances
     
     
-    def defend(self):
+    def defend(self, *args, **kwargs):
         
         # get clean samples
         x, y = get_data_samples_from_loader(torch.utils.data.DataLoader(self.torch_model.data.test, batch_size=self.batch_size), return_numpy=True)
@@ -90,21 +90,14 @@ class Multi_Domain_Trojan_Detector(Backdoor_Detection_Defense):
     def evaluate(self, data_in: Simple_Backdoor, *args, **kwargs):
         
         def get_purified_output(dl: torch.utils.data.DataLoader):
-            
             x, y = get_data_samples_from_loader(dl, return_numpy=True)
-            pred_y = get_outputs(self.torch_model.model, dl, return_numpy=False)
-            
-            top2_values, _ = torch.topk(pred_y, 2, dim=1)
-            y_random = pred_y.clone()
-            y_random -= top2_values[:, 1:2]
-            y_random = -1 * torch.abs(y_random)
-            y_random += top2_values[:, 1:2]
-            # output_random = torch.normal(0, 10, size=pred_y.shape)
+            pred_y = get_outputs(self.torch_model.model, dl, return_numpy=True)
+            output_random = torch.normal(0, 10, size=pred_y.shape)
             distances = self.get_distances(x, y)
+            # vulnerable_indices = ((distances-self.mean_distances) > self.alpha*self.std_distances)
             vulnerable_indices = (distances>self.threshold_distance)
-            pred_y[vulnerable_indices] = y_random[vulnerable_indices].clone()
-            
-            return pred_y.detach().cpu().numpy(), y, np.mean(np.argmax(pred_y.detach().cpu().numpy(), axis=1)==y)
+            pred_y[vulnerable_indices] = output_random[vulnerable_indices]
+            return pred_y, y, np.mean(np.argmax(pred_y, axis=1)==y)
         
         clean_dataloader = torch.utils.data.DataLoader(data_in.test, batch_size=self.torch_model.model_configuration['batch_size'], shuffle=False)
         poisoned_dataloader = torch.utils.data.DataLoader(data_in.poisoned_test, batch_size=self.torch_model.model_configuration['batch_size'], shuffle=False)

@@ -113,7 +113,9 @@ def __comparison_with_sota_dc(dataset_names, results_path_local: str):
     return table_string
 
 
-def comparison_with_sota_dc(dataset_names, results_path_local: str):
+def comparison_with_sota_dc(dataset_name, results_path_local: str):
+    
+    dataset_names = [dataset_name]
     
     # different backdoor clients (one at a time) with 30% backdoor distribution
     backdoor_types = [
@@ -129,7 +131,7 @@ def comparison_with_sota_dc(dataset_names, results_path_local: str):
         'invisible_backdoor_0.3',
         'clean_label_backdoor_0.3',
         'reflection_backdoor_0.3',
-        'wanet_backdoor_0.3',
+        'wanet_backdoor_0.3', # if not 'cifar100' in dataset_name else 'wanet_backdoor_10.0',
         'horizontal_backdoor_0.3',
         
     ]
@@ -158,8 +160,7 @@ def comparison_with_sota_dc(dataset_names, results_path_local: str):
     _results_arr = results_arr.copy()
     best_accs = np.max(_results_arr[:,:,1:,0], axis=(2)); _results_arr[_results_arr<0] = 3
     best_asrs = np.min(_results_arr[:,:,1:,1], axis=(2))
-    # print(results_arr.shape, best_accs.shape)
-    print('|c|' + 'c|'*len(dataset_names)*len(backdoor_types))
+    # print('|c|' + 'c|'*len(dataset_names)*len(backdoor_types))
     
     table_string = ''
     for s, defense_type in enumerate(defense_types):
@@ -192,7 +193,9 @@ def comparison_with_sota_dc(dataset_names, results_path_local: str):
     return table_string
 
 
-def comparison_with_sota_mr(dataset_names, results_path_local: str):
+def comparison_with_sota_mr(dataset_name: str, results_path_local: str):
+    
+    dataset_names = [dataset_name]
     
     # different backdoor clients (one at a time) with 30% backdoor distribution
     backdoor_types = [
@@ -207,9 +210,9 @@ def comparison_with_sota_mr(dataset_names, results_path_local: str):
         'simple_backdoor_0.3',
         'invisible_backdoor_0.3',
         'clean_label_backdoor_0.3',
-        'reflection_backdoor_0.3',
-        'wanet_backdoor_0.3',
-        'horizontal_backdoor_0.3',
+        'reflection_backdoor_1.0' if 'cifar100' in dataset_name else 'reflection_backdoor_0.3',
+        'wanet_backdoor_10.0' if 'cifar100' in dataset_name else 'wanet_backdoor_1.0',
+        'horizontal_backdoor_3.0' if 'cifar100' in dataset_name else 'horizontal_backdoor_0.3',
         
     ]
     
@@ -237,8 +240,7 @@ def comparison_with_sota_mr(dataset_names, results_path_local: str):
     _results_arr = results_arr.copy()
     best_accs = np.max(_results_arr[:,:,1:,0], axis=(2)); _results_arr[_results_arr<0] = 3
     best_asrs = np.min(_results_arr[:,:,1:,1], axis=(2))
-    # print(results_arr.shape)
-    print('|c|' + 'c|'*len(dataset_names)*len(backdoor_types))
+    # print('|c|' + 'c|'*len(dataset_names)*len(backdoor_types))
     
     table_string = ''
     for s, defense_type in enumerate(defense_types):
@@ -266,7 +268,9 @@ def comparison_with_sota_mr(dataset_names, results_path_local: str):
     return table_string
 
 
-def comparison_with_sota_mf(dataset_names, results_path_local: str):
+def comparison_with_sota_mf(dataset_name, results_path_local: str):
+    
+    dataset_names = [dataset_name]
     
     # different backdoor clients (one at a time) with 30% backdoor distribution
     backdoor_types = [
@@ -281,9 +285,9 @@ def comparison_with_sota_mf(dataset_names, results_path_local: str):
         'simple_backdoor_0.3',
         'invisible_backdoor_0.3',
         'clean_label_backdoor_0.3',
-        'reflection_backdoor_0.3',
-        'wanet_backdoor_0.3',
-        'horizontal_backdoor_0.3',
+        'reflection_backdoor_1.0' if 'cifar100' in dataset_name else 'reflection_backdoor_0.3',
+        'wanet_backdoor_10.0' if 'cifar100' in dataset_name else 'wanet_backdoor_1.0',
+        'horizontal_backdoor_3.0' if 'cifar100' in dataset_name else 'horizontal_backdoor_0.3',
         
     ]
     

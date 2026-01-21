@@ -1,15 +1,16 @@
 target_class = 0
+num_target_class_samples = 20
 
 
 general_configuration = {
     'target_class': target_class,
-    'num_target_class_samples': 10,
+    'num_target_class_samples': num_target_class_samples,
 }
 
 
 snpca_configuration={
     'target_class': target_class, 'non_target_class': None,
-    'num_target_class_samples': 10,
+    'num_target_class_samples': num_target_class_samples,
     'wrap_and_normalize_model': True,
     'pca_type': 'pca_sklearn',
     'n_components': None,
@@ -35,7 +36,7 @@ snpca_random_configuration={
     
     # configuration used by NPCA paper
     'target_class': target_class, 'non_target_class': 'random',
-    'num_target_class_samples': 10,
+    'num_target_class_samples': num_target_class_samples,
     'wrap_and_normalize_model': True,
     'pca_type': 'pca_sklearn',
     'n_components': None,
@@ -166,6 +167,14 @@ defenses_configured = {
     'snpca_id_(accessible_samples=40)': {'type': 'snpca_id', 'num_target_class_samples': 40},
     'snpca_id_(accessible_samples=50)': {'type': 'snpca_id', 'num_target_class_samples': 50},
     
+    # Hyperparameter - ID - e_t threshold for processing
+    'snpca_id_(e_t=0.01)': {'type': 'snpca_id', 'e_t': 0.01},
+    'snpca_id_(e_t=0.03)': {'type': 'snpca_id', 'e_t': 0.03},
+    'snpca_id_(e_t=0.05)': {'type': 'snpca_id', 'e_t': 0.05},
+    'snpca_id_(e_t=0.1)': {'type': 'snpca_id', 'e_t': 0.1},
+    'snpca_id_(e_t=0.3)': {'type': 'snpca_id', 'e_t': 0.3},
+    'snpca_id_(e_t=0.5)': {'type': 'snpca_id', 'e_t': 0.5},
+    
     
     # ---------- OOD ----------------
     
@@ -221,6 +230,14 @@ defenses_configured = {
     'snpca_ood_(accessible_samples=30)': {'type': 'snpca_ood', 'num_target_class_samples': 30},
     'snpca_ood_(accessible_samples=40)': {'type': 'snpca_ood', 'num_target_class_samples': 40},
     'snpca_ood_(accessible_samples=50)': {'type': 'snpca_ood', 'num_target_class_samples': 50},
+    
+    # Hyperparameter - OOD - e_t threshold for processing
+    'snpca_ood_(e_t=0.01)': {'type': 'snpca_ood', 'e_t': 0.01},
+    'snpca_ood_(e_t=0.03)': {'type': 'snpca_ood', 'e_t': 0.03},
+    'snpca_ood_(e_t=0.05)': {'type': 'snpca_ood', 'e_t': 0.05},
+    'snpca_ood_(e_t=0.1)': {'type': 'snpca_ood', 'e_t': 0.1},
+    'snpca_ood_(e_t=0.3)': {'type': 'snpca_ood', 'e_t': 0.3},
+    'snpca_ood_(e_t=0.5)': {'type': 'snpca_ood', 'e_t': 0.5},
     
     # OOD play
     'snpca_ood_efficient': {'type': 'snpca_ood', 'fgsm_configuration': {'iterations': 20}, 'masking_configuration': {'iterations': 50}, 'patch_configuration': {'iterations': 50},},

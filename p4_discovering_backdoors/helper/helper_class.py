@@ -3,6 +3,7 @@ import torch
 import numpy as np
 import pandas as pd
 import copy
+from copy import deepcopy
 from termcolor import colored
 import time
 
@@ -15,7 +16,7 @@ from _0_general_ML.model_utils.torch_model import Torch_Model
 
 from _1_adversarial_ML.backdoor_attacks.simple_backdoor import Simple_Backdoor
 
-from ..snpca.npca_paper import NPCA_Paper
+from ..anpca.npca_paper import NPCA_Paper
 from .defense_helper import get_defense
 
 from utils_.torch_utils import get_data_samples_from_loader, prepare_dataloader_from_numpy, get_outputs
@@ -33,23 +34,21 @@ class Helper_Class:
         my_attack_configuration: dict=None,
         my_backdoor_configuration: dict=None,
         my_defense_configuration: dict=None,
-        num_evaluations: int=1,
         verbose :bool=True,
         versioning :bool=True,
         **kwargs
     ):
         
-        self.my_model_configuration = my_model_configuration
-        self.my_attack_configuration = my_attack_configuration
-        self.my_backdoor_configuration = my_backdoor_configuration
-        self.my_defense_configuration = my_defense_configuration
+        self.my_model_configuration = deepcopy(my_model_configuration)
+        self.my_attack_configuration = deepcopy(my_attack_configuration)
+        self.my_backdoor_configuration = deepcopy(my_backdoor_configuration)
+        self.my_defense_configuration = deepcopy(my_defense_configuration)
         
         self.dictionary_to_save = {}
         self.dictionary_to_load = {}
         
         self.last_client_results = {}
         self.re_evaluated_on_non_patient_server = 0
-        self.num_evaluations = num_evaluations
         
         self.verbose = verbose
         self.versioning = versioning
@@ -215,6 +214,7 @@ class Helper_Class:
                 
         # save the dataframe
         df.to_csv(self.csv_path_and_filename_stats, index=False)
+        # print(f'saved stats at: {self.csv_path_and_filename_stats} at column keys: {list(self.dictionary_to_save.keys())}')
         
         return
     
@@ -267,17 +267,16 @@ class Helper_Class:
         keys_present = True if np.sum(np.array(self.check_columns(all_keys)).astype(np.float32))==len(all_keys) else False
         if keys_present and (not force_overwrite):
             print(colored('All keys already found. Moving on to the next experiment.', 'yellow'))
+            # print(colored(f'Keys: {all_keys} already found in {self.csv_path_and_filename_stats}.', 'yellow'))
             return
         else:
             print(colored('Going to perform experiments.', 'yellow'))
             
         
-        iterations = self.num_evaluations if 'snpca_ood' in defense_configuration['type'] else 1
+        iterations = 1 if 'snpca_ood' in defense_configuration['type'] else 1
         
         losses_c, accs_c, losses_p, accs_p = [], [], [], []
         for i in range(iterations):
-            if scenario == 'MR':
-                altered_model.data.renew_data()
             defense = get_defense(data_to_consider, altered_model, defense_configuration=defense_configuration)
             defense.defend()
             (loss_clean, acc_clean), (loss_poisoned, acc_poisoned) = self.evaluate_without_saving(defense, data_to_evaluate, **kwargs)
@@ -342,7 +341,7 @@ class Helper_Class:
         clean_dl = torch.utils.data.DataLoader(new_data_to_consider.test, batch_size=batch_size)
         x, y = get_data_samples_from_loader(clean_dl, return_numpy=True)
         y_predicted = np.argmax(get_outputs(defense.torch_model.model, clean_dl, return_numpy=True), axis=1)
-        cleanly_labelled_indices = np.where((y_predicted!=data_to_consider.backdoor_configuration['target']) & (y!=data_to_consider.backdoor_configuration['target']))[0]
+        cleanly_labelled_indices = np.where((y==y_predicted) & (y!=data_to_consider.backdoor_configuration['target']))[0]
         
         new_data_to_consider.test = Client_SubDataset(data_to_consider.test, cleanly_labelled_indices)
         new_data_to_consider.poisoned_test = Client_SubDataset(data_to_consider.poisoned_test, cleanly_labelled_indices)

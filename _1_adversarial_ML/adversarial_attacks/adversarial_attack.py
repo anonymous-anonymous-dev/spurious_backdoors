@@ -32,14 +32,14 @@ class Adversarial_Attack:
         
         self.loss_functions = local_loss_functions
         
-        self.input_mask = np.ones_like(model.data.train.__getitem__(0)[0])
+        self.input_mask = 1 #np.ones_like(model.data.train.__getitem__(0)[0])
         if input_mask is not None:
             self.input_mask = input_mask
         
         self.output_mask = np.ones_like(model.data.train.__getitem__(0)[1])
         if output_mask is not None:
             self.output_mask = output_mask
-            
+        
         self.verbose = verbose
         self.last_run_loss_values = []
         

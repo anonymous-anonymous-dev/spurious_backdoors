@@ -31,7 +31,10 @@ class Backdoor_Detection_Defense:
         return
     
     
-    def defend(self, *args, **kwargs): self.final_model = deepcopy(self.torch_model); return
+    def defend(self, *args, **kwargs): 
+        self.final_model = Torch_Model(self.torch_model.data, self.torch_model.model_configuration, path=self.torch_model.path)
+        self.final_model.model = deepcopy(self.torch_model.model) 
+        return
     def defend_mr(self, data_in: Simple_Backdoor, epochs: int=10, *args, **kwargs): 
         self.torch_model.train(epochs=epochs)
         self.defend(data_in)

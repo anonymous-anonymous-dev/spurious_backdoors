@@ -141,7 +141,11 @@ class DataFree_Backdoor(Simple_Backdoor):
         
         print('Poisoning the model.')
         self.poison_target = torch.nn.functional.one_hot(torch.tensor([self.targets[0]]), num_classes=self.num_classes)[0]
-        self.poisoned_model = deepcopy(self.torch_model)
+        
+        # self.poisoned_model = deepcopy(self.torch_model)
+        self.poisoned_model = Torch_Model(self.torch_model.data, self.torch_model.model_configuration, path=self.torch_model.path)
+        self.poisoned_model.model.load_state_dict(self.torch_model.model.state_dict())
+        
         self.poisoned_model.freeze_last_n_layers(n=None)
         self.poisoned_model.unfreeze_last_n_layers(n=7)
         self.poisoned_model.freeze_last_n_layers(n=4)

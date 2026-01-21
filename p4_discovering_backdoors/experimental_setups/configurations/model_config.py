@@ -26,7 +26,7 @@ cifar10_model_configuration = {
     'model_architecture': 'cifar10_resnet18',
     'learning_rate': 1e-2,
     'loss_fn': 'crossentropy',
-    'epochs': [200, 70],
+    'epochs': [200],
     'batch_size': 512,
     'optimizer': 'sgd',
     'momentum': 0.9,
@@ -42,6 +42,27 @@ cifar10_vit_model_configuration = {
     'optimizer': 'adam',
     'momentum': 0.9,
     'weight_decay': 0, # 5e-4,
+    'patience': 150,
+}
+cifar10_convnext_model_configuration = {
+    'model_architecture': 'cifar10_convnext',
+    'loss_fn': 'crossentropy',
+    'epochs': 70,
+    'batch_size': 512,
+    # 'optimizer': {
+    #     'name': 'adamw',
+    #     'lr': 2e-3,
+    #     'momentum': 0.9,
+    #     'weight_decay': 5e-2,
+    # },
+    # 'scheduler': {
+    #     'name': 'cosine',
+    # },
+    'optimizer': 'adamw',
+    'learning_rate': 2e-3,
+    'momentum': 0.9,
+    'weight_decay': 5e-2,
+    'scheduler': 'cosine',
     'patience': 150,
 }
 cifar10_model_configuration_non_sota = {
@@ -61,7 +82,7 @@ cifar100_model_configuration = {
     'model_architecture': 'cifar100_resnet18',
     'learning_rate': 1e-2,
     'loss_fn': 'crossentropy',
-    'epochs': [500, 70],
+    'epochs': [500],
     'batch_size': 512,
     'optimizer': 'sgd',
     'momentum': 0.9,
@@ -96,7 +117,7 @@ gtsrb_model_configuration = {
     'model_architecture': 'resnet18_gtsrb',
     'learning_rate': 1e-2,
     'loss_fn': 'crossentropy',
-    'epochs': [100, 50],
+    'epochs': [100],
     'batch_size': 256,
     'optimizer': 'adam',
     'momentum': 0.9,
@@ -224,6 +245,7 @@ model_configurations = {
     'cifar100_vit16': cifar100_vit_model_configuration,
     'cifar10_vit16_official': cifar10_vit_model_configuration,
     'cifar100_vit16_official': cifar100_vit_model_configuration,
+    'cifar10_convnext': cifar10_convnext_model_configuration,
     # model reuse settings
     'mnist_fashion': mnist_fashion_model_configuration,
     'cifar10_gtsrb': cifar10_gtsrb_model_configuration,

@@ -2,6 +2,7 @@ import numpy as np
 import torch
 
 from sklearn.decomposition import PCA, SparsePCA
+from sklearn.decomposition import FastICA
 from sklearn.preprocessing import StandardScaler
 
 
@@ -62,11 +63,8 @@ class PCA_Loss:
 class General_PCA:
     
     def __init__(self, X, **kwargs):
-        
         self.variances, self.components, self.mean = self.compute_pca(X, **kwargs)
-        
         return
-    
     
     def not_implemented(self):
         raise NotImplementedError('This function has not been implemented. Please call the child class.')
@@ -193,13 +191,14 @@ class PCA_of_SKLEARN(General_PCA):
     def compute_pca(self, X, **kwargs):
         
         self.pca = PCA(n_components=self.n_components, **kwargs)
+        # self.pca = FastICA(n_components=self.n_components, max_iter=1000, **kwargs)
         self.pca.fit(X)
         
         # self.components = self.pca.components_
         # self.mean = self.pca.mean_
-        # self.variances = self.pca.explained_variance_ratio_
+        variances = self.pca.explained_variance_ratio_
         
-        return self.pca.explained_variance_ratio_, self.pca.components_.T, self.pca.mean_
+        return variances, self.pca.components_.T, self.pca.mean_
     
     
     def transform(self, activations, device='cuda', **kwargs):

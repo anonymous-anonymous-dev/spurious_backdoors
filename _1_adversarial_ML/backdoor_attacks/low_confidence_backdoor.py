@@ -54,6 +54,6 @@ class Low_Confidence_Backdoor(Simple_Backdoor):
     
     
     def poison(self, x, y, **kwargs):
-        return self.poison_softly(x, y, **kwargs)
+        return self.poison_occasionally(x, y, **kwargs)
     
     

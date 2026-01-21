@@ -1,4 +1,6 @@
-from .experimental_setups.configurations import model_config as model_configurations_config
+from _0_general_ML.configurations import model_config_1 as model_configurations_config
+
+# from .experimental_setups.configurations import model_config as model_configurations_config
 from .experimental_setups.configurations import attack_config as attack_configurations_config
 from .experimental_setups.configurations import backdoor_attack_config as backdoor_configurations_config
 from .experimental_setups.configurations import defense_config as defense_configurations_config
@@ -19,18 +21,17 @@ experimental_setups = [
 # Visible GPU
 visible_gpu = '1'
 multiprocessing_shot = False
-shots_at_a_time = 10
-wait_before_starting_the_next_process = 0
+shots_at_a_time = 1
+wait_before_starting_the_next_process = 15 # in seconds
 versioning = False
 
 # General configurations
-experiment_folder = 'results_snpca_2/'
+experiment_folder = 'results_snpca_3/'
 results_path = '../../__all_results__/_p4_discovering_backdoors/' + experiment_folder
 reconduct_conducted_experiments = False
 count_continued_as_conducted = False
 save_continued = False
-force_overwrite_csv_results = True
-num_evaluations = 5
+force_overwrite_csv_results = False
 
 # Data configurations
 dataset_folder = '../../_Datasets/'

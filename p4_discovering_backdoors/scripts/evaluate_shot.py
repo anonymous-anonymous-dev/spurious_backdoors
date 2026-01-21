@@ -12,7 +12,7 @@ from _0_general_ML.data_utils.torch_subdataset import Client_SubDataset
 
 from ..model_utils.torch_model_save_best import Torch_Model_Save_Best
 
-from ..helper.data_helper import prepare_clean_and_poisoned_data, prepare_clean_and_poisoned_data_for_MR, prepare_clean_and_poisoned_data_for_MF, Limited_Dataset
+from ..helper.data_helper import prepare_clean_and_poisoned_data, prepare_clean_and_poisoned_data_for_MR, prepare_clean_and_poisoned_data_for_MF
 from ..helper.defense_helper import get_defense
 from ..helper.helper_class import Helper_Class
 
@@ -83,28 +83,26 @@ def evaluation_shot_mr(
     
     if defense_configuration['type']=='snpca_id':
         return
-    
-    if defense_configuration['type'] == 'snpca_id':
-        defense_configuration['type'] = 'snpca_ood'
     # -----------------------------
     
     # *** preparing some results-related variables ***
-    num_evaluations = configuration_variables['num_evaluations']
     results_path = configuration_variables['results_path']
     reconduct_conducted_experiments = configuration_variables['reconduct_conducted_experiments']
     csv_file_path = results_path + my_model_configuration['dataset_name'] + '/csv_file/'
     force_overwrite = configuration_variables['force_overwrite_csv_results']
+    threat_model = configuration_variables['threat_model']
     
     # *** code starts here ***
+    my_data, poisoned_data, ood_data = prepare_clean_and_poisoned_data_for_MR(my_model_configuration, my_backdoor_configuration)
+    
     helper = Helper_Class(
         my_model_configuration=my_model_configuration,
         my_backdoor_configuration=my_backdoor_configuration,
-        my_defense_configuration=defense_configuration,
-        num_evaluations=num_evaluations
+        my_defense_configuration=defense_configuration
     )
     helper.prepare_paths_and_names(results_path, csv_file_path, model_name_prefix='central', filename='accuracies_and_losses_test.csv')
+    helper.model_name = f'{threat_model}/' + helper.model_name if (threat_model=='MR') and (poisoned_data.requires_training_control) else helper.model_name
     
-    my_data, poisoned_data, ood_data = prepare_clean_and_poisoned_data_for_MR(my_model_configuration, my_backdoor_configuration)
     helper.check_conducted(data_name=my_data.data_name, count_continued_as_conducted=False)
     
     if helper.experiment_conducted and (not reconduct_conducted_experiments):
@@ -123,18 +121,17 @@ def evaluation_shot_mr(
         data_to_consider = ood_data
         data_to_evaluate = poisoned_data
         
-        # limited_data = deepcopy(my_data)
-        # indices = np.array([
-        #     np.random.choice(np.where(np.array(my_data.test.targets)==target)[0], size=defense_configuration['num_target_class_samples'], replace=False)
-        #     for target in range(my_data.num_classes)
-        # ]).reshape(-1)
-        # limited_data.test = Client_SubDataset(
-        #     my_data.test,
-        #     indices=indices
-        # )
-        # limited_data.train = limited_data.test
+        limited_data = deepcopy(my_data)
+        indices = np.array([
+            np.random.choice(np.where(np.array(my_data.test.targets)==target)[0], size=defense_configuration['num_target_class_samples'], replace=False)
+            for target in range(my_data.num_classes)
+        ]).reshape(-1)
+        limited_data.test = Client_SubDataset(
+            my_data.test,
+            indices=indices
+        )
+        limited_data.train = limited_data.test
         
-        limited_data = Limited_Dataset(my_data, size=defense_configuration['num_target_class_samples'])
         altered_model = Torch_Model_Save_Best(limited_data, my_model_configuration, path=helper.save_path)
         altered_model.load_weights(global_model.save_directory + helper.model_name)
         
@@ -163,27 +160,31 @@ def evaluation_shot_mf(
             my_model_configuration[key] = _my_model_configuration[key]
     my_model_configuration['dataset_name'] = _my_model_configuration['old_dataset_name']
     
-    ood_model_configuration = my_model_configuration.copy()
-    ood_model_configuration['dataset_name'] = _my_model_configuration['dataset_name']
+    ood_model_configuration = deepcopy(my_model_configuration)
+    ood_model_configuration['dataset_name'] = _my_model_configuration['new_dataset_name']
     # -----------------------------
     
     # *** preparing some results-related variables ***
     results_path = configuration_variables['results_path']
     reconduct_conducted_experiments = configuration_variables['reconduct_conducted_experiments']
-    csv_file_path = results_path + my_model_configuration['dataset_name'] + '/csv_file/'
+    csv_file_path = results_path + ood_model_configuration['dataset_name'] + '/csv_file/'
     force_overwrite = configuration_variables['force_overwrite_csv_results']
+    threat_model = configuration_variables['threat_model']
     
     
     # *** code starts here ***
     # ===========================================
     # This helper is used to load the model because we want an already trained model to load.
     # ===========================================
+    my_data, poisoned_data = prepare_clean_and_poisoned_data(my_model_configuration, my_backdoor_configuration)
+    
     helper = Helper_Class(
         my_model_configuration=my_model_configuration,
         my_backdoor_configuration=my_backdoor_configuration,
         my_defense_configuration=defense_configuration
     )
     helper.prepare_paths_and_names(results_path, csv_file_path, model_name_prefix='central', filename='accuracies_and_losses_test.csv')
+    helper.model_name = f'MR/' + helper.model_name if (threat_model in ['MR', 'MF']) and (poisoned_data.requires_training_control) else helper.model_name
     
     # ==========================================
     # This helper saves the model after training it on the out of distribution dataset
@@ -195,19 +196,18 @@ def evaluation_shot_mf(
     )
     another_helper.prepare_paths_and_names(results_path, csv_file_path, model_name_prefix='central', filename='accuracies_and_losses_test.csv')
     
-    my_data, poisoned_data = prepare_clean_and_poisoned_data(my_model_configuration, my_backdoor_configuration)
     helper.check_conducted(data_name=my_data.data_name, count_continued_as_conducted=False)
     
-    if helper.experiment_conducted and (not reconduct_conducted_experiments):
+    if helper.experiment_conducted:
         print('Experiment already conducted. Variable {reconduct_conducted_experiments} is set to False. Moving on to the next experiment.')
     
         global_model = Torch_Model_Save_Best(my_data, my_model_configuration, path=helper.save_path)
         model_found = global_model.load_weights(global_model.save_directory + helper.model_name)
-        if 'kaggle_imagenet' not in my_data.data_name:
-            helper.test_on_clean_and_poisoned_data(global_model, my_data, poisoned_data)
-        else:
-            print('no test data used for ImageNet')
-            # loaded = global_model.load_weights('__ignore__/robust_resnet50_imagenet224.pth')
+        # if 'kaggle_imagenet' not in my_data.data_name:
+        #     helper.test_on_clean_and_poisoned_data(global_model, my_data, poisoned_data)
+        # else:
+        #     print('no test data used for ImageNet')
+        #     # loaded = global_model.load_weights('__ignore__/robust_resnet50_imagenet224.pth')
             
         my_data, ood_data, ood_poisoned_data = prepare_clean_and_poisoned_data_for_MF(_my_model_configuration, my_backdoor_configuration)
         data_to_consider = ood_data
@@ -234,7 +234,9 @@ def evaluation_shot_mf(
             altered_model.save(another_helper.model_name)
             print('saved model at:', altered_model_name)
         
-        helper.evaluate(altered_model, data_to_consider, data_to_evaluate, defense_configuration=defense_configuration, scenario='MF', force_overwrite=force_overwrite, number_of_items=64)
+        another_helper.test_on_clean_and_poisoned_data(altered_model, ood_data, ood_poisoned_data)
+        
+        another_helper.evaluate(altered_model, data_to_consider, data_to_evaluate, defense_configuration=defense_configuration, scenario='MF', force_overwrite=force_overwrite, number_of_items=64)
         
     return
 

@@ -9,6 +9,8 @@ import torch.nn.functional as F
 import torchvision
 
 from _0_general_ML.model_utils.torch_model import Torch_Model
+from utils_.general_utils import normalize
+from utils_.visual_utils import show_image_grid
 
 # from classifier_models import PreActResNet18, ResNet18
 # import config
@@ -40,6 +42,78 @@ from torch import nn
 #     schedulerC = torch.optim.lr_scheduler.MultiStepLR(optimizerC, opt.schedulerC_milestones, opt.schedulerC_lambda)
 
 #     return netC, optimizerC, schedulerC
+
+
+
+def train_toy(
+    train_dl, 
+    noise_grid, 
+    identity_grid, 
+    opt: Parameters
+):
+    
+    rate_bd = 1
+    
+    all_bd_inputs, actual_inputs = [], []
+    for batch_idx, (inputs, targets) in enumerate(train_dl):
+        
+        inputs, targets = inputs.to(opt.device), targets.to(opt.device)
+        bs = inputs.shape[0]
+
+        # Create backdoor data
+        num_bd = int(bs * rate_bd)
+        num_cross = int(num_bd * opt.cross_ratio)
+        grid_temps = (identity_grid + opt.s * noise_grid / opt.input_height) * opt.grid_rescale
+        grid_temps = torch.clamp(grid_temps, -1, 1)
+
+        ins = torch.rand(num_cross, opt.input_height, opt.input_height, 2).to(opt.device) * 2 - 1
+        grid_temps2 = grid_temps.repeat(num_cross, 1, 1, 1) + ins / opt.input_height
+        grid_temps2 = torch.clamp(grid_temps2, -1, 1)
+
+        inputs_bd = F.grid_sample(inputs[:num_bd], grid_temps.repeat(num_bd, 1, 1, 1), align_corners=True)
+        if opt.attack_mode == "all2one":
+            targets_bd = torch.ones_like(targets[:num_bd]) * opt.target_label
+        if opt.attack_mode == "all2all":
+            targets_bd = torch.remainder(targets[:num_bd] + 1, opt.num_classes)
+
+        inputs_cross = F.grid_sample(inputs[num_bd : (num_bd + num_cross)], grid_temps2, align_corners=True)
+        
+        all_bd_inputs.append(inputs_bd.detach().cpu())
+        actual_inputs.append(inputs.detach().cpu())
+        
+    return torch.cat(actual_inputs, dim=0), torch.cat(all_bd_inputs, dim=0)
+
+
+def eval_toy(
+    test_dl,
+    noise_grid,
+    identity_grid,
+    opt: Parameters,
+):
+    
+    total_sample = 0
+    
+    actual_inputs, all_bd_test_inputs = [], []
+    for batch_idx, (inputs, targets) in enumerate(test_dl):
+        with torch.no_grad():
+            inputs, targets = inputs.to(opt.device), targets.to(opt.device)
+            bs = inputs.shape[0]
+            total_sample += bs
+
+            # Evaluate Backdoor
+            grid_temps = (identity_grid + opt.s * noise_grid / opt.input_height) * opt.grid_rescale
+            grid_temps = torch.clamp(grid_temps, -1, 1)
+
+            ins = torch.rand(bs, opt.input_height, opt.input_height, 2).to(opt.device) * 2 - 1
+            grid_temps2 = grid_temps.repeat(bs, 1, 1, 1) + ins / opt.input_height
+            grid_temps2 = torch.clamp(grid_temps2, -1, 1)
+
+            inputs_bd = F.grid_sample(inputs, grid_temps.repeat(bs, 1, 1, 1), align_corners=True)
+            
+            actual_inputs.append(inputs.detach().cpu())
+            all_bd_test_inputs.append(inputs_bd.detach().cpu())
+
+    return torch.cat(actual_inputs, dim=0), torch.cat(all_bd_test_inputs, dim=0)
 
 
 def train(
@@ -74,7 +148,8 @@ def train(
     total_time = 0
 
     avg_acc_cross = 0
-
+    
+    all_bd_inputs = []
     for batch_idx, (inputs, targets) in enumerate(train_dl):
         optimizerC.zero_grad()
 
@@ -102,9 +177,9 @@ def train(
         total_inputs = torch.cat([inputs_bd, inputs_cross, inputs[(num_bd + num_cross) :]], dim=0)
         # total_inputs = transforms(total_inputs)
         total_targets = torch.cat([targets_bd, targets[num_bd:]], dim=0)
-        start = time()
+        # start = time()
         total_preds = netC(total_inputs)
-        total_time += time() - start
+        # total_time += time() - start
 
         loss_ce = criterion_CE(total_preds, total_targets)
 
@@ -134,42 +209,14 @@ def train(
         avg_acc_bd = total_bd_correct * 100.0 / total_bd
 
         avg_loss_ce = total_loss_ce / total_sample
+        all_bd_inputs.append(inputs_bd.detach().cpu())
 
-        # if num_cross:
-        #     progress_bar(
-        #         batch_idx,
-        #         len(train_dl),
-        #         "CE Loss: {:.4f} | Clean Acc: {:.4f} | Bd Acc: {:.4f} | Cross Acc: {:.4f}".format(
-        #             avg_loss_ce, avg_acc_clean, avg_acc_bd, avg_acc_cross
-        #         ),
-        #     )
-        # else:
-        #     progress_bar(
-        #         batch_idx,
-        #         len(train_dl),
-        #         "CE Loss: {:.4f} | Clean Acc: {:.4f} | Bd Acc: {:.4f} ".format(avg_loss_ce, avg_acc_clean, avg_acc_bd),
-        #     )
-
-        # # Save image for debugging
-        # if not batch_idx % 50:
-        #     if not os.path.exists(opt.temps):
-        #         os.makedirs(opt.temps)
-        #     path = os.path.join(opt.temps, "backdoor_image.png")
-        #     torchvision.utils.save_image(inputs_bd, path, normalize=True)
-
-        # # Image for tensorboard
-        # if batch_idx == len(train_dl) - 2:
-        #     residual = inputs_bd - inputs[:num_bd]
-        #     batch_img = torch.cat([inputs[:num_bd], inputs_bd, total_inputs[:num_bd], residual], dim=2)
-        #     batch_img = denormalizer(batch_img)
-        #     batch_img = F.upsample(batch_img, scale_factor=(4, 4))
-        #     grid = torchvision.utils.make_grid(batch_img, normalize=True)
-
-    # for tensorboard
     if not epoch % 1:
         print(f"Clean Accuracy, Clean: {avg_acc_clean}, Bd: {avg_acc_bd}, Cross: {avg_acc_cross}, epoch")
 
     schedulerC.step()
+    
+    return torch.cat(all_bd_inputs, dim=0)
 
 
 def eval(
@@ -197,7 +244,8 @@ def eval(
     total_ae_loss = 0
 
     criterion_BCE = torch.nn.BCELoss()
-
+    
+    all_bd_test_inputs = []
     for batch_idx, (inputs, targets) in enumerate(test_dl):
         with torch.no_grad():
             inputs, targets = inputs.to(opt.device), targets.to(opt.device)
@@ -223,6 +271,8 @@ def eval(
                 targets_bd = torch.remainder(targets + 1, opt.num_classes)
             preds_bd = netC(inputs_bd)
             total_bd_correct += torch.sum(torch.argmax(preds_bd, 1) == targets_bd)
+            
+            all_bd_test_inputs.append(inputs_bd.detach().cpu())
 
             acc_clean = total_clean_correct * 100.0 / total_sample
             acc_bd = total_bd_correct * 100.0 / total_sample
@@ -279,7 +329,7 @@ def eval(
     #         }
     #         json.dump(results_dict, f, indent=2)
 
-    return best_clean_acc, best_bd_acc, best_cross_acc
+    return best_clean_acc, best_bd_acc, best_cross_acc, torch.cat(all_bd_test_inputs, dim=0)
 
 
 def main(torch_model: Torch_Model):
@@ -380,7 +430,7 @@ def main(torch_model: Torch_Model):
     for epoch in range(opt.n_iters):
         print("Epoch {}:".format(epoch + 1))
         
-        train(
+        poisoned_test = train(
             netC, 
             optimizerC, 
             schedulerC, 
@@ -392,7 +442,13 @@ def main(torch_model: Torch_Model):
             opt
         )
         
-        best_clean_acc, best_bd_acc, best_cross_acc = eval(
+        # print(a.shape, b.shape)
+        # an = a.detach().cpu().numpy(); bn = b.detach().cpu().numpy()
+        # show_image_grid(normalize(an), n_cols=5, channels_first=True)
+        # show_image_grid(normalize(bn), n_cols=5, channels_first=True)
+        # assert False
+        
+        best_clean_acc, best_bd_acc, best_cross_acc, bd_test_inputs = eval(
             netC,
             optimizerC,
             schedulerC,

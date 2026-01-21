@@ -61,7 +61,7 @@ class STRIP(Backdoor_Detection_Defense):
         return
     
     
-    def defend(self):
+    def defend(self, *args, **kwargs):
         
         self.prepare_defense()
         self.prepare_threshold()
@@ -70,7 +70,9 @@ class STRIP(Backdoor_Detection_Defense):
         altered_model.model.load_state_dict(self.torch_model.model.state_dict())
         altered_model.model = self.purify_model(altered_model.model)
         
-        self.final_model = deepcopy(altered_model)
+        # self.final_model = deepcopy(altered_model)
+        self.final_model = Torch_Model(altered_model.data, altered_model.model_configuration, path=altered_model.path)
+        self.final_model.model = deepcopy(altered_model.model)
         
         return
     
@@ -145,15 +147,10 @@ class STRIP(Backdoor_Detection_Defense):
                 if local_self.training_mode:
                     return entropy.to(dataset.device)
                 output = local_self.net(dataset.to(self.device))
-                
-                top2_values, _ = torch.topk(output, 2, dim=1)
-                y_random = output.clone()
-                y_random -= top2_values[:, 1:2]
-                y_random = -1 * torch.abs(y_random)
-                y_random += top2_values[:, 1:2]
-                # output_random = torch.normal(0, 10, size=output.shape).to(output.device)
-                output[positives] = y_random[positives].clone()
+                output_random = torch.normal(0, 10, size=output.shape).to(output.device)
+                output[positives] = output_random[positives].clone()
                 return output
+            
             
         return Purified_Net(model, training_mode=training_mode)
     

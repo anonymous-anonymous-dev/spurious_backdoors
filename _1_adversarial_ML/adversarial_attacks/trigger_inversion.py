@@ -23,7 +23,7 @@ class Trigger_Inversion(Adversarial_Attack):
         
         super().__init__(model, loss=loss, input_mask=input_mask, output_mask=output_mask)
         
-        self.optimizer = Torch_Optimizer(name='sgd', lr=1e-3, momentum=0.5)
+        # self.optimizer = Torch_Optimizer(name='sgd', lr=1e-3, momentum=0.5)
         
         self.alpha = alpha
         

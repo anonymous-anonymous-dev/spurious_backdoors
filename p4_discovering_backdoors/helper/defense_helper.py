@@ -11,11 +11,7 @@ from _1_adversarial_ML.backdoor_defenses.post_training_defenses.zero_shot_defens
 
 from _1_adversarial_ML.backdoor_defenses.post_training_defenses.backdoor_defense import Backdoor_Detection_Defense
 
-
-from ..snpca.npca_custom_no_masking import NPCA_Custom
-from ..snpca.npca_custom_with_masking import NPCA_Custom_with_Masking
-from ..snpca.npca_random import NPCA_Random
-from ..snpca.npca_random_ood import NPCA_Random_OOD
+from ..anpca.npca_custom import NPCA_Custom
 """
 Note that the defense must have a function called evaluate.
 This function when called returns the (loss_clean, acc_clean), (loss_poisoned, acc_poisoned) values
@@ -35,7 +31,7 @@ defenses_dict = {
     # our proposed SNPCA
     'snpca_id': NPCA_Custom,
     # 'snpca_random': NPCA_Random,
-    'snpca_ood': NPCA_Random
+    'snpca_ood': NPCA_Custom
 }
 
 

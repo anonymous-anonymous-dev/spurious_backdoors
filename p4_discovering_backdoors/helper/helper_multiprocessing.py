@@ -23,14 +23,47 @@ class Helper_Multiprocessing:
     
     
     def check_running_processes(self):
-        
+        self.remove_completed_processes()
+
         self.running_processes = 0
         for process in self.all_processes:
             if process.is_alive():
                 self.running_processes += 1
-        
+
         gc.collect()
-        
+
+        return
+
+
+    def remove_completed_processes(self):
+        """Join and remove processes that have finished from `self.all_processes`.
+
+        Adjusts `self.current_index` so the next-to-start index remains valid.
+        Increments `self.completed_processes` for each removed process.
+        """
+        to_remove = []
+        for idx, process in enumerate(self.all_processes):
+            # consider a process completed if it has an exitcode (i.e. was started and finished)
+            try:
+                finished = (not process.is_alive()) and (process.exitcode is not None)
+            except Exception:
+                # be conservative: if any attribute access fails, skip removal
+                finished = False
+
+            if finished:
+                try:
+                    process.join(timeout=0)
+                except Exception:
+                    pass
+                to_remove.append(idx)
+
+        # remove from highest index to lowest to avoid shifting problems
+        for idx in reversed(to_remove):
+            del self.all_processes[idx]
+            if idx < self.current_index:
+                self.current_index -= 1
+            self.completed_processes += 1
+
         return
     
     
@@ -55,7 +88,7 @@ class Helper_Multiprocessing:
             
             i = (i+1) % 100
             if i == 0:
-                print('\n\nRunning process {}, {}/{}.\n\n'.format(self.running_processes, self.current_index, len(self.all_processes)))
+                print(f'\n\nRunning process {self.current_index}/{len(self.all_processes)}. Completed: {self.completed_processes}. Currently running: {self.running_processes}.\n\n')
                 
         while self.running_processes > 0:
             self.check_running_processes()

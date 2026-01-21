@@ -74,7 +74,9 @@ class Spectral_Clustering(Backdoor_Detection_Defense):
         altered_model.model.load_state_dict(self.torch_model.model.state_dict())
         altered_model.model = self.purify_model(altered_model.model)
         
-        self.final_model = deepcopy(altered_model)
+        # self.final_model = deepcopy(altered_model)
+        self.final_model = Torch_Model(altered_model.data, altered_model.model_configuration, path=altered_model.path)
+        self.final_model.model = deepcopy(altered_model.model)
         
         # clean_dataloader = torch.utils.data.DataLoader(data_in.test, batch_size=self.torch_model.model_configuration['batch_size'], shuffle=False)
         # poisoned_dataloader = torch.utils.data.DataLoader(data_in.poisoned_test, batch_size=self.torch_model.model_configuration['batch_size'], shuffle=False)
@@ -114,13 +116,8 @@ class Spectral_Clustering(Backdoor_Detection_Defense):
                 
                 positives = local_self.detect(dataset, output_classes)
                 
-                top2_values, _ = torch.topk(output, 2, dim=1)
-                y_random = output.clone()
-                y_random -= top2_values[:, 1:2]
-                y_random = -1 * torch.abs(y_random)
-                y_random += top2_values[:, 1:2]
-                # output_random = torch.normal(0, 10, size=output.shape).to(output.device)
-                output[positives] = y_random[positives].clone()
+                output_random = torch.normal(0, 10, size=output.shape).to(output.device)
+                output[positives] = output_random[positives].clone()
                 
                 return output
             

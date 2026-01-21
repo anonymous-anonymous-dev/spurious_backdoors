@@ -10,8 +10,9 @@ from .adversarial_attack import Adversarial_Attack
 
 class i_FGSM(Adversarial_Attack):
     
-    def __init__(self, model: Torch_Model, loss='crossentropy', input_mask=None, output_mask=None):
-        super().__init__(model, loss=loss, input_mask=input_mask, output_mask=output_mask)
+    def __init__(self, model: Torch_Model, loss='crossentropy', input_mask=None, output_mask=None, verbose: bool=True, **kwargs):
+        super().__init__(model, loss=loss, input_mask=input_mask, output_mask=output_mask, verbose=verbose, **kwargs)
+        return
     
     
     def attack(
@@ -28,7 +29,7 @@ class i_FGSM(Adversarial_Attack):
         x_perturbation = np.zeros_like(x_input).astype(np.float32)
 
         for iteration in range(iterations):
-            print(f'\rIterations: {iteration}/{iterations}', end='')
+            self.print_out(f'\rIterations: {iteration}/{iterations}', end='')
             
             x_perturbation = self.fgsm_step(
                 x_input, y_input, x_perturbation, 
