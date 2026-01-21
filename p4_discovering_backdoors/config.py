@@ -22,7 +22,7 @@ experimental_setups = [
 visible_gpu = '1'
 multiprocessing_shot = False
 shots_at_a_time = 1
-wait_before_starting_the_next_process = 15 # in seconds
+wait_before_starting_the_next_process = 0 # in seconds
 versioning = False
 
 # General configurations
