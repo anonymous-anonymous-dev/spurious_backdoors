@@ -26,7 +26,7 @@ backdoor_attack_types = [
     # 'spurious_0.3',
     # 'spurious_sun_0.1',
     
-    # 'simple_backdoor_0',
+    'simple_backdoor_0',
     
     # 'simple_backdoor_0.1',
     # 'invisible_backdoor_0.1',
@@ -35,13 +35,13 @@ backdoor_attack_types = [
     # 'wanet_backdoor_0.1',
     # 'horizontal_backdoor_0.1',
     
-    # 'simple_backdoor_0.3',
-    # 'invisible_backdoor_0.3',
-    # 'reflection_backdoor_0.3',
-    # 'wanet_backdoor_0.3',
-    # 'clean_label_backdoor_0.3',
-    # 'horizontal_backdoor_0.3',
-    # 'wanet_backdoor_1.0',
+    'simple_backdoor_0.3',
+    'invisible_backdoor_0.3',
+    'reflection_backdoor_0.3',
+    'wanet_backdoor_0.3',
+    'clean_label_backdoor_0.3',
+    'horizontal_backdoor_0.3',
+    'wanet_backdoor_1.0',
     
     # 'invisible_backdoor_1.0',
     'clean_label_backdoor_1.0',
@@ -82,14 +82,14 @@ backdoor_attack_types = [
 
 defense_types = [
     'vanilla',
-    # 'strip', 
-    # 'activation_clustering', 
-    # 'spectral_signatures',
-    # 'mdtd',
-    # 'zero_shot_purification',
+    'strip', 
+    'activation_clustering', 
+    'spectral_signatures',
+    'mdtd',
+    'zero_shot_purification',
     
-    # 'snpca_id',
-    # 'snpca_ood'
+    'snpca_id',
+    'snpca_ood'
 ]
 
 
